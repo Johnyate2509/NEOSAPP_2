@@ -63,6 +63,31 @@
   font-size: 18px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-name {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
 /* CONTENIDO */
 .content {
   flex: 1;
