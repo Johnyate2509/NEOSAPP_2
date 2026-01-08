@@ -1,0 +1,72 @@
+/* CONTENEDOR GENERAL */
+.app {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-gray);
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: var(--bg-dark);
+  color: var(--text-light);
+  padding-top: 24px;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--gold);
+  padding: 0 20px 20px;
+}
+
+/* MENU */
+.sidebar nav a {
+  display: block;
+  padding: 14px 20px;
+  color: #bbb;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.sidebar nav a.active {
+  background: rgba(200, 169, 81, 0.15);
+  color: var(--gold);
+  border-left: 3px solid var(--gold);
+}
+
+.sidebar nav a:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.header {
+  height: 70px;
+  background: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+.header h1 {
+  color: var(--gold);
+  font-size: 18px;
+}
+
+/* CONTENIDO */
+.content {
+  flex: 1;
+  padding: 24px;
+  background: var(--bg-gray);
+  overflow-y: auto;
+}
