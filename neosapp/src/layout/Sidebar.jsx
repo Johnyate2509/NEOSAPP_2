@@ -21,6 +21,9 @@ export default function Sidebar() {
         <NavLink to="/mapa">
           Mapa
         </NavLink>
+        <NavLink to="/productos">
+        Productos
+        </NavLink>
       </nav>
     </aside>
   );

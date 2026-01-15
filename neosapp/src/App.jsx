@@ -8,6 +8,7 @@ import Repartidores from "./pages/Repartidores";
 import Mapa from "./pages/Mapa";
 import "./styles/global.css";
 import "./styles/variables.css";
+import Productos from "./pages/Producto";
 
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/pedidos" element={<Pedidos />} />
             <Route path="/repartidores" element={<Repartidores />} />
             <Route path="/mapa" element={<Mapa />} />
+            <Route path="/productos" element={<Productos />} />
           </Routes>
         </div>
       </div>
