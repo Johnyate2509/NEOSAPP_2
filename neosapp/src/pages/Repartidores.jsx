@@ -8,10 +8,15 @@ export default function Repartidores() {
   const agregarRepartidor = () => {
     if (!nombre || !zona) return;
 
+    const nuevoId =
+  pedidos.length > 0
+    ? Math.max(...Repartidores.map((p) => p.id)) + 1
+    : 1;
+
     setRepartidores([
       ...repartidores,
       {
-        id: Date.now(),
+        id: nuevoId,
         nombre,
         zona
       }

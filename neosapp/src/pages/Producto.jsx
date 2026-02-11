@@ -10,7 +10,7 @@ const CATEGORIAS = [
 ];
 
 export default function Producto() {
-  const { productos, setProductos } = useStore();
+  const { productos, setProductos, crearPedido } = useStore();
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevo, setNuevo] = useState({
