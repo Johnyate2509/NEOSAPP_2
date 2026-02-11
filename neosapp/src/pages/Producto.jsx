@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStore } from "../context/StoreContext";
 import "./producto.css";
 
 const CATEGORIAS = [
@@ -9,12 +10,7 @@ const CATEGORIAS = [
 ];
 
 export default function Producto() {
-  const [productos, setProductos] = useState([
-    { id: 1, nombre: "Gancho Dorado", categoria: "Ganchos para cabello", precio: 8000 },
-    { id: 2, nombre: "Gancho Perla", categoria: "Ganchos para cabello", precio: 9500 },
-    { id: 3, nombre: "Keratina Pro", categoria: "Tratamientos", precio: 45000 },
-    { id: 4, nombre: "Esmalte Rojo", categoria: "Esmaltes", precio: 12000 },
-  ]);
+  const { productos, setProductos } = useStore();
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevo, setNuevo] = useState({
@@ -33,6 +29,7 @@ export default function Producto() {
         nombre: nuevo.nombre,
         precio: Number(nuevo.precio),
         categoria: nuevo.categoria,
+        stock: 10, // importante
       },
     ]);
 
@@ -42,15 +39,16 @@ export default function Producto() {
 
   return (
     <div className="productos-page">
-      {/* HEADER */}
       <div className="productos-header">
         <h2>Productos</h2>
-        <button className="btn-primary" onClick={() => setMostrarModal(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => setMostrarModal(true)}
+        >
           + Nuevo producto
         </button>
       </div>
 
-      {/* CATEGORÍAS */}
       {CATEGORIAS.map((categoria) => (
         <div className="categoria-bloque" key={categoria}>
           <h3 className="categoria-titulo">{categoria}</h3>
@@ -63,18 +61,24 @@ export default function Producto() {
                   <div className="producto-imagen">Imagen</div>
 
                   <div className="producto-info">
-                    <span className="producto-nombre">{p.nombre}</span>
+                    <span className="producto-nombre">
+                      {p.nombre}
+                    </span>
                     <span className="producto-precio">
                       ${p.precio.toLocaleString()}
+                    </span>
+                    <span className="producto-stock">
+                      Stock: {p.stock}
                     </span>
                   </div>
 
                   <div className="producto-acciones">
-                    <button className="btn-edit">Editar</button>
                     <button
                       className="btn-delete"
                       onClick={() =>
-                        setProductos(productos.filter((x) => x.id !== p.id))
+                        setProductos(
+                          productos.filter((x) => x.id !== p.id)
+                        )
                       }
                     >
                       Eliminar
@@ -86,7 +90,6 @@ export default function Producto() {
         </div>
       ))}
 
-      {/* MODAL */}
       {mostrarModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -95,14 +98,18 @@ export default function Producto() {
             <input
               placeholder="Nombre"
               value={nuevo.nombre}
-              onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+              onChange={(e) =>
+                setNuevo({ ...nuevo, nombre: e.target.value })
+              }
             />
 
             <input
               type="number"
               placeholder="Precio"
               value={nuevo.precio}
-              onChange={(e) => setNuevo({ ...nuevo, precio: e.target.value })}
+              onChange={(e) =>
+                setNuevo({ ...nuevo, precio: e.target.value })
+              }
             />
 
             <select
@@ -117,8 +124,13 @@ export default function Producto() {
             </select>
 
             <div className="modal-actions">
-              <button onClick={() => setMostrarModal(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={crearProducto}>
+              <button onClick={() => setMostrarModal(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={crearProducto}
+              >
                 Guardar
               </button>
             </div>

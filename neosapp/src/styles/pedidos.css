@@ -1,0 +1,147 @@
+.pedidos-page {
+  padding: 24px;
+  background: #f5f6f8;
+  min-height: 100vh;
+}
+
+.pedidos-page h2 {
+  margin-bottom: 20px;
+}
+
+/* FILTROS */
+.pedidos-filtros {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.pedidos-filtros input,
+.pedidos-filtros select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* GRID */
+.pedidos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* TARJETA */
+.pedido-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* HEADER */
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.estado {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* COLORES ESTADO */
+.estado.Pendiente {
+  background: #fff4e5;
+  color: #e67e22;
+}
+
+.estado.En-camino {
+  background: #eaf2ff;
+  color: #2980b9;
+}
+
+.estado.Entregado {
+  background: #e9f9f0;
+  color: #27ae60;
+}
+
+.estado.Cancelado {
+  background: #fdeaea;
+  color: #c0392b;
+}
+
+/* INFO */
+.pedido-info p {
+  margin: 2px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+/* FOOTER */
+.pedido-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total {
+  font-weight: bold;
+  color: var(--gold);
+}
+
+/* CREAR PEDIDO */
+.crear-pedido {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+.crear-pedido input,
+.crear-pedido select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  flex: 1;
+  min-width: 150px;
+}
+
+.crear-pedido button {
+  background: var(--gold);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.crear-pedido button:hover {
+  opacity: 0.85;
+}
+
+/* BOTON ELIMINAR */
+.btn-delete {
+  background: #fdeaea;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #c0392b;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-delete:hover {
+  background: #f8d7da;
+}

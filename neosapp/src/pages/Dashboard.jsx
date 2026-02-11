@@ -1,29 +1,52 @@
 import "./dashboard.css";
+import { useStore } from "../context/StoreContext";
 
 export default function Dashboard() {
+  const { pedidos, repartidores } = useStore();
+
+  const pedidosHoy = pedidos.length;
+
+  const entregasEnCurso = pedidos.filter(
+    (p) => p.estado === "En camino"
+  ).length;
+
+  const incidencias = pedidos.filter(
+    (p) => p.estado === "Retraso" || p.estado === "Cancelado"
+  ).length;
+
+  const pedidosRecientes = pedidos.slice(-3).reverse();
+
+  const repartidoresActivos = repartidores?.filter(
+    (r) => r.estado === "activo"
+  ).length || 0;
+
   return (
     <div className="dashboard">
 
       {/* KPIs */}
       <div className="kpi-grid">
-        <Kpi title="Pedidos Hoy" value="128" />
-        <Kpi title="Repartidores Activos" value="6" />
-        <Kpi title="Entregas en Curso" value="14" />
-        <Kpi title="Incidencias" value="2" alert />
+        <Kpi title="Pedidos Hoy" value={pedidosHoy} />
+        <Kpi title="Repartidores Activos" value={repartidoresActivos} />
+        <Kpi title="Entregas en Curso" value={entregasEnCurso} />
+        <Kpi title="Incidencias" value={incidencias} alert />
       </div>
 
       {/* Mapa + Pedidos */}
       <div className="dashboard-row">
+
         <div className="card map-card">
           <h3>Mapa en tiempo real</h3>
           <div className="map-placeholder">
             Mapa aquí
           </div>
-          <button className="btn-link">Ver mapa completo</button>
+          <button className="btn-link">
+            Ver mapa completo
+          </button>
         </div>
 
         <div className="card">
           <h3>Pedidos recientes</h3>
+
           <table className="table">
             <thead>
               <tr>
@@ -33,28 +56,25 @@ export default function Dashboard() {
                 <th>Repartidor</th>
               </tr>
             </thead>
+
             <tbody>
-              <tr>
-                <td>#1023</td>
-                <td>Ana Pérez</td>
-                <td><span className="badge success">En ruta</span></td>
-                <td>Carlos</td>
-              </tr>
-              <tr>
-                <td>#1024</td>
-                <td>Laura Gómez</td>
-                <td><span className="badge warning">Pendiente</span></td>
-                <td>—</td>
-              </tr>
-              <tr>
-                <td>#1025</td>
-                <td>Sofía Ruiz</td>
-                <td><span className="badge danger">Retraso</span></td>
-                <td>Mario</td>
-              </tr>
+              {pedidosRecientes.map((p) => (
+                <tr key={p.id}>
+                  <td>#{p.id}</td>
+                  <td>{p.cliente}</td>
+                  <td>
+                    <span className={`badge ${getBadge(p.estado)}`}>
+                      {p.estado}
+                    </span>
+                  </td>
+                  <td>{p.repartidor || "—"}</td>
+                </tr>
+              ))}
             </tbody>
+
           </table>
         </div>
+
       </div>
 
       {/* Repartidores */}
@@ -62,14 +82,33 @@ export default function Dashboard() {
         <h3>Repartidores</h3>
 
         <div className="drivers">
-          <Driver name="Carlos" status="activo" />
-          <Driver name="Mario" status="activo" />
-          <Driver name="Luis" status="inactivo" />
+          {repartidores?.map((r) => (
+            <Driver
+              key={r.id}
+              name={r.nombre}
+              status={r.estado}
+            />
+          ))}
         </div>
       </div>
 
     </div>
   );
+}
+
+/* Helpers */
+
+function getBadge(estado) {
+  switch (estado) {
+    case "En camino":
+      return "success";
+    case "Pendiente":
+      return "warning";
+    case "Cancelado":
+      return "danger";
+    default:
+      return "warning";
+  }
 }
 
 /* Componentes visuales */
