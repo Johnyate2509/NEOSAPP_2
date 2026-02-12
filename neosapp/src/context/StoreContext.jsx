@@ -33,6 +33,19 @@ export function StoreProvider({ children }) {
         "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=500&h=500&fit=crop"
       ]
     },
+    {
+      id: 3,
+      nombre: "Esmalte Rojo Intenso",
+      categoria: "Esmaltes",
+      precio: 12000,
+      stock: 20,
+      descripcion: "Esmalte de alta calidad con color intenso y durabilidad prolongada. Ideal para un look elegante.",
+      imagenes: [
+        "https://images.unsplash.com/photo-1593696145393-7c8e2f8f7c8f?w=500&h=500&fit=crop",
+        "https://images.unsplash.com/photo-1593696145393-7c8e2f8f7c8f?w=500&h=500&fit=crop",
+        "https://images.unsplash.com/photo-1593696145393-7c8e2f8f7c8f?w=500&h=500&fit=crop"
+      ]
+    }
   ]);
 
   // ============================================

@@ -12,17 +12,17 @@ export default function Sidebar() {
       <nav>
         {/* Menú principal */}
         <NavLink to="/" end>
-          {esAdministrador ? "📊 Dashboard" : "💳 Cartera"}
+          {esAdministrador ? " Dashboard" : " Cartera"}
         </NavLink>
 
         <NavLink to="/productos">
-          🛍️ Productos
+           Productos
         </NavLink>
 
         {/* Clientes - solo para admin */}
         {esAdministrador && (
           <NavLink to="/clientes">
-            👥 Clientes
+             Clientes
           </NavLink>
         )}
 
@@ -33,23 +33,23 @@ export default function Sidebar() {
             <div className="nav-section-title">Administración</div>
 
             <NavLink to="/pedidos">
-              📋 Pedidos
+               Pedidos
             </NavLink>
 
             <NavLink to="/repartidores">
-              🚗 Repartidores
+               Repartidores
             </NavLink>
 
             <NavLink to="/vendedores">
-              👨‍💼 Vendedores
+               Vendedores
             </NavLink>
 
             <NavLink to="/mapa">
-              🗺️ Mapa
+               Mapa
             </NavLink>
 
             <NavLink to="/admin-clientes">
-              ⚙️ Configuración
+              Administrar clientes
             </NavLink>
           </>
         )}

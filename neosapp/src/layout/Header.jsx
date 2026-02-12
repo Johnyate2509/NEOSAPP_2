@@ -24,7 +24,7 @@ export default function Header() {
       <div className="header-right">
         <div className="usuario-info">
           <span className={`badge-tipo ${esAdministrador ? "admin" : "cliente"}`}>
-            {esAdministrador ? "👨‍💼 Administrador" : "👤 Cliente"}
+            {esAdministrador ? " Administrador" : " Cliente"}
           </span>
           <span className="usuario-nombre">{usuario}</span>
         </div>
@@ -53,7 +53,7 @@ export default function Header() {
                 className="menu-item logout"
                 onClick={handleLogout}
               >
-                🚪 Cerrar sesión
+                 Cerrar sesión
               </button>
             </div>
           )}

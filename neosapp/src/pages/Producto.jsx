@@ -247,19 +247,7 @@ export default function Producto() {
                       }}
                       title="Actualizar stock"
                     >
-                      📦
-                    </button>
-                    <button
-                      className="btn-agotar"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`¿Agotar stock de "${p.nombre}"?`)) {
-                          agotarProducto(p.id);
-                        }
-                      }}
-                      title="Agotar stock"
-                    >
-                      ✓
+                      Actualizar stock
                     </button>
                     <button
                       className="btn-delete"
