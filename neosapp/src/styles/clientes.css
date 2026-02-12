@@ -1,0 +1,429 @@
+/* CONTENEDOR PRINCIPAL */
+.clientes-page {
+  padding: 24px;
+  background: #f5f6f8;
+  min-height: 100vh;
+}
+
+.clientes-page h2 {
+  color: #1e40af;
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.clientes-page > p {
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* CONTENEDOR PRINCIPAL */
+.clientes-contenedor {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+}
+
+/* LISTA DE CLIENTES */
+.clientes-lista {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.clientes-lista h3 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.clientes-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.clientes-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.clientes-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+/* ITEM CLIENTE */
+.cliente-item {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+  background: #f9f9f9;
+}
+
+.cliente-item:hover {
+  background: #f0f5ff;
+  border-left-color: #1e40af;
+}
+
+.cliente-item.activo {
+  background: #e8eef9;
+  border-left-color: #1e40af;
+}
+
+.cliente-nombre {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.cliente-cedula {
+  margin: 2px 0;
+  font-size: 11px;
+  color: #999;
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.cliente-saldo {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.cliente-saldo .debe {
+  color: #e63946;
+  font-weight: 600;
+}
+
+.cliente-saldo .favor {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.cliente-saldo .al-dia {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.cliente-pedidos {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  color: #999;
+}
+
+/* DETALLE DEL CLIENTE */
+.cliente-detalle {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detalle-header {
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.detalle-header h3 {
+  margin: 0;
+  color: #1e40af;
+  font-size: 18px;
+}
+
+/* INFO CLIENTE */
+.info-cliente {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-group label {
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.info-group p {
+  margin: 0;
+  font-size: 13px;
+  color: #333;
+  word-break: break-word;
+}
+
+.saldo-grande {
+  font-size: 16px !important;
+  font-weight: 700;
+}
+
+.saldo-grande.debe {
+  color: #e63946;
+}
+
+.saldo-grande.favor {
+  color: #27ae60;
+}
+
+.saldo-grande.al-dia {
+  color: #4b5563;
+}
+
+/* SECCIONES */
+.seccion-telefono,
+.seccion-pago,
+.seccion-pedidos,
+.seccion-transacciones {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+}
+
+.seccion-pago {
+  background: #f0f5ff;
+  padding: 16px;
+  border-radius: 8px;
+  border-top: none;
+  border-left: 4px solid #1e40af;
+}
+
+.seccion-telefono h4,
+.seccion-pago h4,
+.seccion-pedidos h4,
+.seccion-transacciones h4 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+}
+
+/* INPUT GROUP */
+.input-group,
+.pago-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.input-group input,
+.pago-group input {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.input-group input:focus,
+.pago-group input:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.btn-actualizar,
+.btn-pago {
+  padding: 8px 16px;
+  background: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-actualizar:hover,
+.btn-pago:hover {
+  background: #1e3a8a;
+  transform: translateY(-1px);
+}
+
+/* PEDIDOS */
+.pedidos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pedido-mini {
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border-left: 3px solid #1e40af;
+}
+
+.pedido-mini-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.pedido-numero {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.estado-badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.estado-badge.pendiente {
+  background: #fff4e5;
+  color: #e67e22;
+}
+
+.estado-badge.en-camino {
+  background: #eaf2ff;
+  color: #2980b9;
+}
+
+.estado-badge.entregado {
+  background: #e9f9f0;
+  color: #27ae60;
+}
+
+.estado-badge.cancelado {
+  background: #fdeaea;
+  color: #c0392b;
+}
+
+.pedido-fecha {
+  margin: 2px 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.pedido-monto {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* TRANSACCIONES */
+.transacciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.transacciones-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.transacciones-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.transaccion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border-left: 3px solid #ccc;
+}
+
+.transaccion-item.pedido {
+  border-left-color: #e67e22;
+}
+
+.transaccion-item.pago {
+  border-left-color: #27ae60;
+}
+
+.trans-info {
+  flex: 1;
+}
+
+.trans-descripcion {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.trans-fecha {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.trans-monto {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.trans-monto.pedido {
+  color: #e67e22;
+}
+
+.trans-monto.pago {
+  color: #27ae60;
+}
+
+.sin-transacciones {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 12px;
+}
+
+/* SIN SELECCIÓN */
+.sin-seleccion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .clientes-contenedor {
+    grid-template-columns: 1fr;
+  }
+
+  .clientes-lista {
+    max-height: 300px;
+  }
+
+  .info-cliente {
+    grid-template-columns: 1fr;
+  }
+}

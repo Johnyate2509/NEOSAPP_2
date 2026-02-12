@@ -1,0 +1,218 @@
+/* PÁGINA ADMIN CLIENTES */
+.admin-clientes-page {
+  padding: 24px;
+  background: #f5f6f8;
+  min-height: 100vh;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admin-header h2 {
+  color: #1e40af;
+  margin: 0;
+  font-size: 24px;
+}
+
+.btn-crear {
+  padding: 10px 18px;
+  background: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.btn-crear:hover {
+  background: #1e3a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+/* FORMULARIO */
+.form-crear-cliente {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #1e40af;
+}
+
+.form-crear-cliente h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.mensaje {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mensaje.exito {
+  background: #e9f9f0;
+  color: #27ae60;
+  border-left: 4px solid #27ae60;
+}
+
+.mensaje.error {
+  background: #fdeaea;
+  color: #e63946;
+  border-left: 4px solid #e63946;
+}
+
+.form-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.btn-guardar {
+  padding: 10px 24px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.btn-guardar:hover {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* TABLA DE CLIENTES */
+.clientes-grid {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.clientes-grid h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.clientes-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.5fr 1fr;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 12px;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.5fr 1fr;
+  align-items: center;
+  padding: 14px 12px;
+  gap: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f9f9f9;
+}
+
+.col-cedula {
+  font-family: monospace;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.col-nombre {
+  color: #333;
+  font-weight: 500;
+}
+
+.col-direccion {
+  color: #666;
+  font-size: 12px;
+}
+
+.col-telefono {
+  color: #999;
+  font-size: 12px;
+}
+
+.table-empty {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+  }
+
+  .col-cedula::before {
+    content: "Cédula: ";
+    font-weight: 600;
+  }
+
+  .col-nombre::before {
+    content: "Nombre: ";
+    font-weight: 600;
+  }
+
+  .col-direccion::before {
+    content: "Dirección: ";
+    font-weight: 600;
+  }
+
+  .col-telefono::before {
+    content: "Teléfono: ";
+    font-weight: 600;
+  }
+}

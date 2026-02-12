@@ -24,6 +24,13 @@ export default function Sidebar() {
         <NavLink to="/productos">
         Productos
         </NavLink>
+        <NavLink to="/clientes">
+        Clientes
+        </NavLink>
+
+        <NavLink to="/admin-clientes">
+        Administración
+        </NavLink>
       </nav>
     </aside>
   );

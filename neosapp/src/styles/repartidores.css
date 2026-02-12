@@ -1,0 +1,133 @@
+/* Estilos para el formulario */
+.repartidores-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.repartidores-input {
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.repartidores-input:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  background-color: #f0f5ff;
+}
+
+.repartidores-input::placeholder {
+  color: #999;
+}
+
+.btn-agregar {
+  padding: 10px 20px;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-agregar:hover {
+  background-color: #1e3a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+}
+
+.btn-agregar:active {
+  transform: translateY(0);
+}
+
+/* Contenedor de tarjetas */
+.repartidores-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Tarjetas con animación de entrada */
+.tarjeta-repartidor {
+  border: 2px solid #e0e0e0;
+  padding: 16px;
+  border-radius: 8px;
+  width: 220px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInDown 0.4s ease-out;
+}
+
+.tarjeta-repartidor:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+.tarjeta-repartidor h4 {
+  margin: 0 0 10px 0;
+  color: #1e40af;
+  font-size: 16px;
+}
+
+.tarjeta-repartidor p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.btn-eliminar {
+  background: #e63946;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-eliminar:hover {
+  background: #d62828;
+  transform: scale(1.02);
+}
+
+.btn-eliminar:active {
+  transform: scale(0.98);
+}
+
+/* Animación de entrada */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Titulo y descripción */
+.repartidores-header h2 {
+  color: #1e40af;
+  margin-bottom: 8px;
+}
+
+.repartidores-header p {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
