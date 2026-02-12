@@ -3,13 +3,15 @@ import { useStore } from "../context/StoreContext";
 import "../styles/admin-clientes.css";
 
 export default function AdminClientes() {
-  const { clientes, crearCliente } = useStore();
+  const { clientes, crearCliente, vendedores } = useStore();
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nuevoCliente, setNuevoCliente] = useState({
     cedula: "",
     nombre: "",
     direccion: "",
     telefono: "",
+    correo: "",
+    vendedor_id: null,
   });
   const [mensaje, setMensaje] = useState("");
 
@@ -23,7 +25,9 @@ export default function AdminClientes() {
       nuevoCliente.nombre,
       nuevoCliente.cedula,
       nuevoCliente.direccion,
-      nuevoCliente.telefono
+      nuevoCliente.telefono,
+      nuevoCliente.correo,
+      nuevoCliente.vendedor_id ? parseInt(nuevoCliente.vendedor_id) : null
     );
 
     if (resultado.error) {
@@ -37,6 +41,8 @@ export default function AdminClientes() {
       nombre: "",
       direccion: "",
       telefono: "",
+      correo: "",
+      vendedor_id: null,
     });
     setTimeout(() => {
       setMostrarForm(false);
@@ -84,6 +90,23 @@ export default function AdminClientes() {
               value={nuevoCliente.telefono}
               onChange={(e) => setNuevoCliente({ ...nuevoCliente, telefono: e.target.value })}
             />
+            <input
+              type="email"
+              placeholder="Correo (Opcional)"
+              value={nuevoCliente.correo}
+              onChange={(e) => setNuevoCliente({ ...nuevoCliente, correo: e.target.value })}
+            />
+            <select
+              value={nuevoCliente.vendedor_id || ""}
+              onChange={(e) => setNuevoCliente({ ...nuevoCliente, vendedor_id: e.target.value })}
+            >
+              <option value="">Seleccionar Vendedor (Opcional)</option>
+              {vendedores.map((vendedor) => (
+                <option key={vendedor.id} value={vendedor.id}>
+                  {vendedor.nombre} - {vendedor.zona}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button className="btn-guardar" onClick={handleCrearCliente}>
@@ -101,17 +124,24 @@ export default function AdminClientes() {
             <div className="col-nombre">Nombre</div>
             <div className="col-direccion">Dirección</div>
             <div className="col-telefono">Teléfono</div>
+            <div className="col-correo">Correo</div>
+            <div className="col-vendedor">Vendedor</div>
           </div>
 
           {clientes.length > 0 ? (
-            clientes.map((cliente) => (
-              <div key={cliente.id} className="table-row">
-                <div className="col-cedula">{cliente.cedula}</div>
-                <div className="col-nombre">{cliente.nombre}</div>
-                <div className="col-direccion">{cliente.direccion}</div>
-                <div className="col-telefono">{cliente.telefono || "-"}</div>
-              </div>
-            ))
+            clientes.map((cliente) => {
+              const vendedor = vendedores.find((v) => v.id === cliente.vendedor_id);
+              return (
+                <div key={cliente.id} className="table-row">
+                  <div className="col-cedula">{cliente.cedula}</div>
+                  <div className="col-nombre">{cliente.nombre}</div>
+                  <div className="col-direccion">{cliente.direccion}</div>
+                  <div className="col-telefono">{cliente.telefono || "-"}</div>
+                  <div className="col-correo">{cliente.correo || "-"}</div>
+                  <div className="col-vendedor">{vendedor ? vendedor.nombre : "-"}</div>
+                </div>
+              );
+            })
           ) : (
             <div className="table-empty">No hay clientes registrados</div>
           )}

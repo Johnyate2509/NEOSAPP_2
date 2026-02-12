@@ -1,8 +1,36 @@
 import "./dashboard.css";
 import { useStore } from "../context/StoreContext";
+import { useAuth } from "../context/AuthContext";
+import Producto from "./Producto";
 
 export default function Dashboard() {
-  const { pedidos, repartidores } = useStore();
+  const { pedidos, repartidores, productos, clientes } = useStore();
+  const { esAdmin, obtenerUsuario } = useAuth();
+  const esAdministrador = esAdmin();
+  const usuarioActual = obtenerUsuario();
+
+  // Si es cliente, mostrar cartera y productos
+  if (!esAdministrador) {
+    // Buscar cartera del cliente
+    const clienteActual = clientes.find(c => c.nombre === usuarioActual);
+    const cartera = clienteActual?.saldo || 0;
+
+    return (
+      <div className="dashboard dashboard-cliente">
+        <div className="cartera-section">
+          <div className="card cartera-card">
+            <h2>Cartera</h2>
+            <div className="cartera-amount">${cartera.toLocaleString()}</div>
+            <p className="cartera-label">Saldo disponible</p>
+          </div>
+        </div>
+
+        <div className="productos-section">
+          <Producto />
+        </div>
+      </div>
+    );
+  }
 
   const pedidosHoy = pedidos.length;
 

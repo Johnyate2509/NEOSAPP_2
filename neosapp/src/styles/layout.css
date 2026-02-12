@@ -41,6 +41,21 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.nav-divider {
+  margin: 12px 20px;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-section-title {
+  padding: 12px 20px 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* MAIN */
 .main {
   flex: 1;
@@ -66,12 +81,43 @@
 .header-right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 20px;
 }
 
-.admin-name {
-  font-size: 14px;
-  color: #ccc;
+.usuario-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.badge-tipo {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-tipo.admin {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.badge-tipo.cliente {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+}
+
+.usuario-nombre {
+  font-size: 13px;
+  color: #bbb;
+  font-weight: 500;
+}
+
+.avatar-menu {
+  position: relative;
 }
 
 .avatar {
@@ -86,6 +132,81 @@
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(200, 169, 81, 0.3);
+}
+
+/* MENU DESPLEGABLE */
+.menu-desplegable {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: var(--bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  min-width: 250px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  color: #bbb;
+  font-size: 13px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.menu-item.disabled {
+  cursor: default;
+  padding: 10px 16px;
+}
+
+.menu-item.disabled strong {
+  color: #ffc107;
+}
+
+.menu-item:not(.disabled):hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.menu-item.logout {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.menu-item.logout:hover {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff8787;
+}
+
+.menu-label {
+  color: #999;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
+}
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0;
 }
 
 /* CONTENIDO */

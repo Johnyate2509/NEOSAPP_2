@@ -12,7 +12,7 @@ const CATEGORIAS = [
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
-  const { productos, setProductos, crearPedido } = useStore();
+  const { productos, setProductos, crearProducto, actualizarStock, agotarProducto, crearPedido } = useStore();
 
   // Estados para crear nuevo producto
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -20,7 +20,19 @@ export default function Producto() {
     nombre: "",
     precio: "",
     categoria: CATEGORIAS[0],
+    stock: "",
+    descripcion: "",
   });
+
+  // Estados para ver detalles del producto
+  const [mostrarDetalles, setMostrarDetalles] = useState(false);
+  const [productoDetalles, setProductoDetalles] = useState(null);
+  const [indiceCarrusel, setIndiceCarrusel] = useState(0);
+
+  // Estados para actualizar stock
+  const [mostrarModalStock, setMostrarModalStock] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [nuevoStock, setNuevoStock] = useState("");
 
   // Estados para el carrito
   const [carrito, setCarrito] = useState([]);
@@ -32,22 +44,72 @@ export default function Producto() {
     formaPago: FORMAS_PAGO[0],
   });
 
-  const crearProducto = () => {
-    if (!nuevo.nombre || !nuevo.precio) return;
+  const crearProductoHandler = () => {
+    if (!nuevo.nombre || !nuevo.precio || !nuevo.stock) {
+      alert("Por favor completa nombre, precio y stock");
+      return;
+    }
 
-    setProductos([
-      ...productos,
-      {
-        id: Date.now(),
-        nombre: nuevo.nombre,
-        precio: Number(nuevo.precio),
-        categoria: nuevo.categoria,
-        stock: 10,
-      },
-    ]);
+    const resultado = crearProducto(
+      nuevo.nombre, 
+      nuevo.precio, 
+      nuevo.categoria, 
+      nuevo.stock,
+      nuevo.descripcion
+    );
 
-    setNuevo({ nombre: "", precio: "", categoria: CATEGORIAS[0] });
+    if (resultado.error) {
+      alert(`Error: ${resultado.error}`);
+      return;
+    }
+
+    setNuevo({ nombre: "", precio: "", categoria: CATEGORIAS[0], stock: "", descripcion: "" });
     setMostrarModal(false);
+    alert("✅ Producto creado exitosamente");
+  };
+
+  const abrirDetalles = (producto) => {
+    setProductoDetalles(producto);
+    setIndiceCarrusel(0);
+    setMostrarDetalles(true);
+  };
+
+  const siguienteImagen = () => {
+    setIndiceCarrusel(
+      (prev) => (prev + 1) % productoDetalles.imagenes.length
+    );
+  };
+
+  const imagenAnterior = () => {
+    setIndiceCarrusel(
+      (prev) => (prev - 1 + productoDetalles.imagenes.length) % productoDetalles.imagenes.length
+    );
+  };
+
+  const abrirModalStock = (producto) => {
+    setProductoSeleccionado(producto);
+    setNuevoStock(producto.stock.toString());
+    setMostrarModalStock(true);
+  };
+
+  const actualizarStockHandler = () => {
+    if (!nuevoStock) return;
+
+    const cantidad = Number(nuevoStock) - productoSeleccionado.stock;
+    if (cantidad === 0) {
+      alert("El stock es igual al actual");
+      setMostrarModalStock(false);
+      return;
+    }
+
+    const resultado = actualizarStock(productoSeleccionado.id, cantidad);
+    if (resultado) {
+      alert(`✅ Stock actualizado a ${nuevoStock} unidades`);
+      setMostrarModalStock(false);
+      setNuevoStock("");
+    } else {
+      alert("❌ No se puede establecer un stock negativo");
+    }
   };
 
   const agregarAlCarrito = (producto) => {
@@ -143,8 +205,19 @@ export default function Producto() {
             {productos
               .filter((p) => p.categoria === categoria)
               .map((p) => (
-                <div className="producto-card" key={p.id}>
-                  <div className="producto-imagen">Imagen</div>
+                <div 
+                  className="producto-card" 
+                  key={p.id}
+                  onClick={() => abrirDetalles(p)}
+                  role="button"
+                  tabIndex="0"
+                >
+                  <div className="producto-imagen">
+                    <img 
+                      src={p.imagenes?.[0] || "https://images.unsplash.com/photo-1522338242592-cb0acf6f85a2?w=500&h=500&fit=crop"} 
+                      alt={p.nombre}
+                    />
+                  </div>
 
                   <div className="producto-info">
                     <span className="producto-nombre">
@@ -167,12 +240,35 @@ export default function Producto() {
                       Agregar
                     </button>
                     <button
+                      className="btn-stock"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        abrirModalStock(p);
+                      }}
+                      title="Actualizar stock"
+                    >
+                      📦
+                    </button>
+                    <button
+                      className="btn-agotar"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`¿Agotar stock de "${p.nombre}"?`)) {
+                          agotarProducto(p.id);
+                        }
+                      }}
+                      title="Agotar stock"
+                    >
+                      ✓
+                    </button>
+                    <button
                       className="btn-delete"
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setProductos(
                           productos.filter((x) => x.id !== p.id)
-                        )
-                      }
+                        );
+                      }}
                     >
                       Eliminar
                     </button>
@@ -206,6 +302,26 @@ export default function Producto() {
               }
             />
 
+            <input
+              type="number"
+              placeholder="Stock inicial"
+              value={nuevo.stock}
+              onChange={(e) =>
+                setNuevo({ ...nuevo, stock: e.target.value })
+              }
+              min="0"
+            />
+
+            <textarea
+              placeholder="Descripción del producto (opcional)"
+              value={nuevo.descripcion}
+              onChange={(e) =>
+                setNuevo({ ...nuevo, descripcion: e.target.value })
+              }
+              rows="3"
+              style={{ fontFamily: "inherit", resize: "vertical" }}
+            />
+
             <select
               value={nuevo.categoria}
               onChange={(e) =>
@@ -223,10 +339,130 @@ export default function Producto() {
               </button>
               <button
                 className="btn-primary"
-                onClick={crearProducto}
+                onClick={crearProductoHandler}
               >
                 Guardar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para actualizar stock */}
+      {mostrarModalStock && productoSeleccionado && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Actualizar Stock</h3>
+            <p><strong>{productoSeleccionado.nombre}</strong></p>
+            <p>Stock actual: <strong>{productoSeleccionado.stock}</strong> unidades</p>
+
+            <input
+              type="number"
+              placeholder="Nuevo stock"
+              value={nuevoStock}
+              onChange={(e) => setNuevoStock(e.target.value)}
+              min="0"
+            />
+
+            <div className="modal-actions">
+              <button onClick={() => setMostrarModalStock(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={actualizarStockHandler}
+              >
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para ver detalles del producto */}
+      {mostrarDetalles && productoDetalles && (
+        <div className="modal-overlay" onClick={() => setMostrarDetalles(false)}>
+          <div className="modal-detalles" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="btn-cerrar"
+              onClick={() => setMostrarDetalles(false)}
+            >
+              ✕
+            </button>
+
+            <div className="detalles-contenedor">
+              {/* Carrusel de imágenes */}
+              <div className="detalles-carrusel">
+                <img 
+                  src={productoDetalles.imagenes[indiceCarrusel]} 
+                  alt={productoDetalles.nombre}
+                  className="imagen-principal"
+                />
+                
+                {productoDetalles.imagenes.length > 1 && (
+                  <>
+                    <button 
+                      className="btn-carrusel-prev"
+                      onClick={imagenAnterior}
+                    >
+                      ❮
+                    </button>
+                    <button 
+                      className="btn-carrusel-next"
+                      onClick={siguienteImagen}
+                    >
+                      ❯
+                    </button>
+                  </>
+                )}
+
+                <div className="indicadores-carrusel">
+                  {productoDetalles.imagenes.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`indicador ${index === indiceCarrusel ? "activo" : ""}`}
+                      onClick={() => setIndiceCarrusel(index)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Información del producto */}
+              <div className="detalles-info">
+                <h2>{productoDetalles.nombre}</h2>
+                
+                <div className="detalles-categoria">
+                  <span className="badge-categoria">{productoDetalles.categoria}</span>
+                </div>
+
+                <p className="detalles-descripcion">
+                  {productoDetalles.descripcion || "No hay descripción disponible"}
+                </p>
+
+                <div className="detalles-precio-stock">
+                  <div className="precio-grande">
+                    ${productoDetalles.precio.toLocaleString()}
+                  </div>
+                  <div className={`stock-info ${productoDetalles.stock <= 0 ? "sinstock" : "constock"}`}>
+                    {productoDetalles.stock <= 0 
+                      ? "❌ Sin stock" 
+                      : `✓ ${productoDetalles.stock} disponibles`}
+                  </div>
+                </div>
+
+                <div className="detalles-acciones">
+                  <button
+                    className="btn-agregar-grande"
+                    onClick={() => {
+                      agregarAlCarrito(productoDetalles);
+                      setMostrarDetalles(false);
+                    }}
+                    disabled={productoDetalles.stock <= 0}
+                  >
+                    🛒 Agregar al carrito
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

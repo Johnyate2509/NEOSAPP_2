@@ -88,10 +88,22 @@
   transition: all 0.2s ease;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: #1e40af;
   box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+  cursor: pointer;
 }
 
 .btn-guardar {
@@ -135,7 +147,7 @@
 
 .table-header {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1.5fr 1fr;
+  grid-template-columns: 0.8fr 1.2fr 1.5fr 1fr 1.2fr 1fr;
   background: #f8f9fa;
   border-bottom: 2px solid #e0e0e0;
   padding: 12px;
@@ -148,7 +160,7 @@
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1.5fr 1fr;
+  grid-template-columns: 0.8fr 1.2fr 1.5fr 1fr 1.2fr 1fr;
   align-items: center;
   padding: 14px 12px;
   gap: 12px;
@@ -182,6 +194,16 @@
   font-size: 12px;
 }
 
+.col-correo {
+  color: #999;
+  font-size: 12px;
+}
+
+.col-vendedor {
+  color: #666;
+  font-weight: 500;
+}
+
 .table-empty {
   padding: 40px;
   text-align: center;
@@ -213,6 +235,16 @@
 
   .col-telefono::before {
     content: "Teléfono: ";
+    font-weight: 600;
+  }
+
+  .col-correo::before {
+    content: "Correo: ";
+    font-weight: 600;
+  }
+
+  .col-vendedor::before {
+    content: "Vendedor: ";
     font-weight: 600;
   }
 }
