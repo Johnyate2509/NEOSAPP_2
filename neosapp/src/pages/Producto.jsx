@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreContext";
+import { useAuth } from "../context/AuthContext";
 import "./producto.css";
 
 const CATEGORIAS = [
@@ -13,8 +14,7 @@ const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
   const { productos, setProductos, crearProducto, actualizarStock, agotarProducto, crearPedido } = useStore();
-
-  // Estados para crear nuevo producto
+  const { esAdmin } = useAuth();
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevo, setNuevo] = useState({
     nombre: "",
@@ -28,6 +28,7 @@ export default function Producto() {
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
   const [productoDetalles, setProductoDetalles] = useState(null);
   const [indiceCarrusel, setIndiceCarrusel] = useState(0);
+  const [cantidadDetalles, setCantidadDetalles] = useState(1);
 
   // Estados para actualizar stock
   const [mostrarModalStock, setMostrarModalStock] = useState(false);
@@ -37,6 +38,9 @@ export default function Producto() {
   // Estados para el carrito
   const [carrito, setCarrito] = useState([]);
   const [mostrarModalPedido, setMostrarModalPedido] = useState(false);
+  const [mostrarModalCantidad, setMostrarModalCantidad] = useState(false);
+  const [productoCantidad, setProductoCantidad] = useState(null);
+  const [cantidadInput, setCantidadInput] = useState(1);
   const [datosCliente, setDatosCliente] = useState({
     cedula: "",
     nombre: "",
@@ -71,6 +75,7 @@ export default function Producto() {
   const abrirDetalles = (producto) => {
     setProductoDetalles(producto);
     setIndiceCarrusel(0);
+    setCantidadDetalles(1);
     setMostrarDetalles(true);
   };
 
@@ -115,21 +120,62 @@ export default function Producto() {
   const agregarAlCarrito = (producto) => {
     if (producto.stock <= 0) return;
 
-    const productoEnCarrito = carrito.find((p) => p.id === producto.id);
+    if (esAdmin()) {
+      // Los administradores pueden agregar directamente
+      const productoEnCarrito = carrito.find((p) => p.id === producto.id);
 
-    if (productoEnCarrito) {
-      if (productoEnCarrito.cantidad < producto.stock) {
-        setCarrito(
-          carrito.map((p) =>
-            p.id === producto.id
-              ? { ...p, cantidad: p.cantidad + 1 }
-              : p
-          )
-        );
+      if (productoEnCarrito) {
+        if (productoEnCarrito.cantidad < producto.stock) {
+          setCarrito(
+            carrito.map((p) =>
+              p.id === producto.id
+                ? { ...p, cantidad: p.cantidad + 1 }
+                : p
+            )
+          );
+        }
+      } else {
+        setCarrito([...carrito, { ...producto, cantidad: 1 }]);
       }
     } else {
-      setCarrito([...carrito, { ...producto, cantidad: 1 }]);
+      // Los clientes deben especificar la cantidad
+      setProductoCantidad(producto);
+      setCantidadInput(1);
+      setMostrarModalCantidad(true);
     }
+  };
+
+  const confirmarAgregarCantidad = () => {
+    if (!productoCantidad || cantidadInput <= 0) return;
+
+    if (cantidadInput > productoCantidad.stock) {
+      alert(`No hay suficiente stock. Stock disponible: ${productoCantidad.stock}`);
+      return;
+    }
+
+    const productoEnCarrito = carrito.find((p) => p.id === productoCantidad.id);
+
+    if (productoEnCarrito) {
+      const nuevaCantidad = productoEnCarrito.cantidad + cantidadInput;
+      if (nuevaCantidad > productoCantidad.stock) {
+        alert(`No hay suficiente stock. Máximo disponible: ${productoCantidad.stock}`);
+        return;
+      }
+      setCarrito(
+        carrito.map((p) =>
+          p.id === productoCantidad.id
+            ? { ...p, cantidad: nuevaCantidad }
+            : p
+        )
+      );
+    } else {
+      setCarrito([...carrito, { ...productoCantidad, cantidad: cantidadInput }]);
+    }
+
+    setMostrarModalCantidad(false);
+    setProductoCantidad(null);
+    setCantidadInput(1);
+    alert("✅ Producto agregado al carrito");
   };
 
   const eliminarDelCarrito = (productoId) => {
@@ -180,12 +226,14 @@ export default function Producto() {
       <div className="productos-header">
         <h2>Tienda de Productos</h2>
         <div>
-          <button
-            className="btn-primary"
-            onClick={() => setMostrarModal(true)}
-          >
-            + Nuevo producto
-          </button>
+          {esAdmin() && (
+            <button
+              className="btn-primary"
+              onClick={() => setMostrarModal(true)}
+            >
+              + Nuevo producto
+            </button>
+          )}
           {carrito.length > 0 && (
             <button
               className="btn-carrito"
@@ -239,27 +287,31 @@ export default function Producto() {
                     >
                       Agregar
                     </button>
-                    <button
-                      className="btn-stock"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        abrirModalStock(p);
-                      }}
-                      title="Actualizar stock"
-                    >
-                      Actualizar stock
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setProductos(
-                          productos.filter((x) => x.id !== p.id)
-                        );
-                      }}
-                    >
-                      Eliminar
-                    </button>
+                    {esAdmin() && (
+                      <>
+                        <button
+                          className="btn-stock"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            abrirModalStock(p);
+                          }}
+                          title="Actualizar stock"
+                        >
+                          Actualizar stock
+                        </button>
+                        <button
+                          className="btn-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProductos(
+                              productos.filter((x) => x.id !== p.id)
+                            );
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -268,7 +320,7 @@ export default function Producto() {
       ))}
 
       {/* Modal para crear producto */}
-      {mostrarModal && (
+      {mostrarModal && esAdmin() && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Nuevo producto</h3>
@@ -337,7 +389,7 @@ export default function Producto() {
       )}
 
       {/* Modal para actualizar stock */}
-      {mostrarModalStock && productoSeleccionado && (
+      {mostrarModalStock && productoSeleccionado && esAdmin() && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Actualizar Stock</h3>
@@ -439,11 +491,66 @@ export default function Producto() {
                 </div>
 
                 <div className="detalles-acciones">
+                  <div className="cantidad-detalles">
+                    <label>Cantidad:</label>
+                    <div className="cantidad-input-group-detalles">
+                      <button
+                        onClick={() => setCantidadDetalles(Math.max(1, cantidadDetalles - 1))}
+                        className="btn-cantidad-detalles"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        value={cantidadDetalles}
+                        onChange={(e) => {
+                          const valor = Number(e.target.value);
+                          if (valor > 0 && valor <= productoDetalles.stock) {
+                            setCantidadDetalles(valor);
+                          }
+                        }}
+                        min="1"
+                        max={productoDetalles.stock}
+                        className="cantidad-input-detalles"
+                      />
+                      <button
+                        onClick={() => setCantidadDetalles(Math.min(productoDetalles.stock, cantidadDetalles + 1))}
+                        className="btn-cantidad-detalles"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
                   <button
                     className="btn-agregar-grande"
                     onClick={() => {
-                      agregarAlCarrito(productoDetalles);
+                      if (cantidadDetalles <= 0 || cantidadDetalles > productoDetalles.stock) {
+                        alert("Cantidad inválida");
+                        return;
+                      }
+
+                      const productoEnCarrito = carrito.find((p) => p.id === productoDetalles.id);
+                      if (productoEnCarrito) {
+                        const nuevaCantidad = productoEnCarrito.cantidad + cantidadDetalles;
+                        if (nuevaCantidad > productoDetalles.stock) {
+                          alert(`No hay suficiente stock. Máximo disponible: ${productoDetalles.stock}`);
+                          return;
+                        }
+                        setCarrito(
+                          carrito.map((p) =>
+                            p.id === productoDetalles.id
+                              ? { ...p, cantidad: nuevaCantidad }
+                              : p
+                          )
+                        );
+                      } else {
+                        setCarrito([...carrito, { ...productoDetalles, cantidad: cantidadDetalles }]);
+                      }
+
+                      alert("✅ Producto agregado al carrito");
                       setMostrarDetalles(false);
+                      setCantidadDetalles(1);
                     }}
                     disabled={productoDetalles.stock <= 0}
                   >
@@ -451,6 +558,68 @@ export default function Producto() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para seleccionar cantidad */}
+      {mostrarModalCantidad && productoCantidad && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Cantidad de productos</h3>
+            <p style={{ marginBottom: "16px", color: "#666" }}>
+              <strong>{productoCantidad.nombre}</strong>
+            </p>
+            <p style={{ marginBottom: "16px", fontSize: "14px", color: "#888" }}>
+              Stock disponible: {productoCantidad.stock} unidades
+            </p>
+
+            <div className="cantidad-selector">
+              <label>¿Cuántos deseas agregar?</label>
+              <div className="cantidad-input-group">
+                <button
+                  onClick={() => setCantidadInput(Math.max(1, cantidadInput - 1))}
+                  className="btn-cantidad"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  value={cantidadInput}
+                  onChange={(e) => {
+                    const valor = Number(e.target.value);
+                    if (valor > 0) setCantidadInput(valor);
+                  }}
+                  min="1"
+                  max={productoCantidad.stock}
+                  className="cantidad-input"
+                />
+                <button
+                  onClick={() => setCantidadInput(Math.min(productoCantidad.stock, cantidadInput + 1))}
+                  className="btn-cantidad"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => {
+                  setMostrarModalCantidad(false);
+                  setProductoCantidad(null);
+                  setCantidadInput(1);
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={confirmarAgregarCantidad}
+              >
+                Agregar al carrito
+              </button>
             </div>
           </div>
         </div>

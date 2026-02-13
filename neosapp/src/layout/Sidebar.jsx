@@ -12,11 +12,7 @@ export default function Sidebar() {
       <nav>
         {/* Menú principal */}
         <NavLink to="/" end>
-          {esAdministrador ? " Dashboard" : " Cartera"}
-        </NavLink>
-
-        <NavLink to="/productos">
-           Productos
+          {esAdministrador ? " Dashboard" : " Productos"}
         </NavLink>
 
         {/* Clientes - solo para admin */}

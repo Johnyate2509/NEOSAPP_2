@@ -294,6 +294,66 @@
   background: #e0e0e0;
 }
 
+/* SELECTOR DE CANTIDAD */
+.cantidad-selector {
+  margin: 20px 0;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.cantidad-selector label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.cantidad-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-cantidad {
+  background: #e8e8e8;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cantidad:hover {
+  background: #d0d0d0;
+  transform: scale(1.05);
+}
+
+.btn-cantidad:active {
+  transform: scale(0.95);
+}
+
+.cantidad-input {
+  width: 70px;
+  padding: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid #1e40af;
+  border-radius: 6px;
+  color: #1e40af;
+}
+
+.cantidad-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
 /* CARRITO */
 .modal-carrito {
   margin-bottom: 20px;
@@ -368,6 +428,15 @@
   text-align: center;
   border: none;
   padding: 4px;
+}
+
+.cantidad-fija {
+  width: 50px;
+  text-align: center;
+  padding: 4px;
+  font-weight: 600;
+  color: #333;
+  display: inline-block;
 }
 
 .btn-delete-small {
@@ -610,10 +679,69 @@
   display: flex;
   gap: 12px;
   margin-top: auto;
+  flex-direction: column;
+}
+
+.cantidad-detalles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cantidad-detalles label {
+  font-weight: 600;
+  color: #333;
+  min-width: 70px;
+}
+
+.cantidad-input-group-detalles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border-radius: 6px;
+  padding: 2px;
+  border: 2px solid #e5e7eb;
+}
+
+.btn-cantidad-detalles {
+  background: #f0f0f0;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-cantidad-detalles:hover {
+  background: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.btn-cantidad-detalles:active {
+  transform: scale(0.95);
+}
+
+.cantidad-input-detalles {
+  width: 60px;
+  text-align: center;
+  border: none;
+  padding: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.cantidad-input-detalles:focus {
+  outline: none;
 }
 
 .btn-agregar-grande {
   flex: 1;
+  width: 100%;
   background: #10b981;
   color: white;
   border: none;
