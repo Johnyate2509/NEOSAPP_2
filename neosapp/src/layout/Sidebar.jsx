@@ -28,6 +28,10 @@ export default function Sidebar() {
             <hr className="nav-divider" />
             <div className="nav-section-title">Administración</div>
 
+            <NavLink to="/productos">
+               Productos
+            </NavLink>
+
             <NavLink to="/pedidos">
                Pedidos
             </NavLink>

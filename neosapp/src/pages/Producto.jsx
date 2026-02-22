@@ -22,7 +22,9 @@ export default function Producto() {
     categoria: CATEGORIAS[0],
     stock: "",
     descripcion: "",
+    imagenes: [],
   });
+  const [imagenesVista, setImagenesVista] = useState([]);
 
   // Estados para ver detalles del producto
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
@@ -59,7 +61,8 @@ export default function Producto() {
       nuevo.precio, 
       nuevo.categoria, 
       nuevo.stock,
-      nuevo.descripcion
+      nuevo.descripcion,
+      nuevo.imagenes.length > 0 ? nuevo.imagenes : []
     );
 
     if (resultado.error) {
@@ -67,9 +70,42 @@ export default function Producto() {
       return;
     }
 
-    setNuevo({ nombre: "", precio: "", categoria: CATEGORIAS[0], stock: "", descripcion: "" });
+    setNuevo({ nombre: "", precio: "", categoria: CATEGORIAS[0], stock: "", descripcion: "", imagenes: [] });
+    setImagenesVista([]);
     setMostrarModal(false);
     alert("✅ Producto creado exitosamente");
+  };
+
+  const handleImagenSeleccionada = (e) => {
+    const archivos = Array.from(e.target.files);
+    const maxImagenes = 5;
+    
+    if (archivos.length + nuevo.imagenes.length > maxImagenes) {
+      alert(`Máximo ${maxImagenes} imágenes permitidas`);
+      return;
+    }
+
+    // Procesar cada archivo
+    archivos.forEach((archivo) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imagenBase64 = event.target.result;
+        setNuevo((prev) => ({
+          ...prev,
+          imagenes: [...prev.imagenes, imagenBase64],
+        }));
+        setImagenesVista((prev) => [...prev, imagenBase64]);
+      };
+      reader.readAsDataURL(archivo);
+    });
+  };
+
+  const eliminarImagen = (index) => {
+    setNuevo((prev) => ({
+      ...prev,
+      imagenes: prev.imagenes.filter((_, i) => i !== index),
+    }));
+    setImagenesVista((prev) => prev.filter((_, i) => i !== index));
   };
 
   const abrirDetalles = (producto) => {
@@ -373,8 +409,42 @@ export default function Producto() {
               ))}
             </select>
 
+            {/* Sección de imágenes */}
+            <div className="seccion-imagenes">
+              <label className="etiqueta-imagenes">Imágenes del producto (máximo 5):</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImagenSeleccionada}
+                className="input-imagenes"
+              />
+              
+              {imagenesVista.length > 0 && (
+                <div className="previsualizacion-imagenes">
+                  {imagenesVista.map((imagen, index) => (
+                    <div key={index} className="item-imagen-preview">
+                      <img src={imagen} alt={`Preview ${index + 1}`} />
+                      <button
+                        type="button"
+                        className="btn-eliminar-imagen"
+                        onClick={() => eliminarImagen(index)}
+                        title="Eliminar imagen"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="modal-actions">
-              <button onClick={() => setMostrarModal(false)}>
+              <button onClick={() => {
+                setMostrarModal(false);
+                setNuevo({ nombre: "", precio: "", categoria: CATEGORIAS[0], stock: "", descripcion: "", imagenes: [] });
+                setImagenesVista([]);
+              }}>
                 Cancelar
               </button>
               <button
