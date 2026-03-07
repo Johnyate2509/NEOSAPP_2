@@ -8,9 +8,17 @@ const ADMIN_DATA = {
   cedula: "123456789"
 };
 
+// Datos de prueba - Repartidores
+const REPARTIDORES_DATA = [
+  { id: 1, usuario: "Carlos", cedula: "9876543210", nombre: "Carlos Rodríguez", zona: "Norte" },
+  { id: 2, usuario: "David", cedula: "1122334455", nombre: "David García", zona: "Sur" },
+  { id: 3, usuario: "Elena", cedula: "5544332211", nombre: "Elena Martínez", zona: "Oriente" }
+];
+
 export function AuthProvider({ children }) {
   const [usuarioAutenticado, setUsuarioAutenticado] = useState(null);
-  const [tipoUsuario, setTipoUsuario] = useState(null); // "admin" o "cliente"
+  const [tipoUsuario, setTipoUsuario] = useState(null); // "admin", "cliente" o "repartidor"
+  const [usuarioData, setUsuarioData] = useState(null); // Datos adicionales del usuario autenticado
 
   /**
    * Realiza el login del usuario
@@ -27,6 +35,7 @@ export function AuthProvider({ children }) {
     if (usuario === ADMIN_DATA.usuario && cedula === ADMIN_DATA.cedula) {
       setUsuarioAutenticado(usuario);
       setTipoUsuario("admin");
+      setUsuarioData({ usuario });
       return { 
         success: true, 
         mensaje: "Bienvenido Administrador",
@@ -34,10 +43,29 @@ export function AuthProvider({ children }) {
       };
     }
 
-    // Si no es admin, es cliente (permite cualquier usuario/contraseña válidos)
+    // Verificar si es repartidor
+    const repartidor = REPARTIDORES_DATA.find(r => r.usuario === usuario && r.cedula === cedula);
+    if (repartidor) {
+      setUsuarioAutenticado(usuario);
+      setTipoUsuario("repartidor");
+      setUsuarioData({ 
+        id: repartidor.id,
+        usuario: repartidor.usuario,
+        nombre: repartidor.nombre,
+        zona: repartidor.zona 
+      });
+      return { 
+        success: true, 
+        mensaje: `Bienvenido ${repartidor.nombre}`,
+        tipoUsuario: "repartidor"
+      };
+    }
+
+    // Si no es admin ni repartidor, es cliente (permite cualquier usuario/contraseña válidos)
     if (usuario.trim() && cedula.trim()) {
       setUsuarioAutenticado(usuario);
       setTipoUsuario("cliente");
+      setUsuarioData({ usuario });
       return { 
         success: true, 
         mensaje: `Bienvenido ${usuario}`,
@@ -54,6 +82,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setUsuarioAutenticado(null);
     setTipoUsuario(null);
+    setUsuarioData(null);
   };
 
   /**
@@ -63,10 +92,22 @@ export function AuthProvider({ children }) {
   const esAdmin = () => tipoUsuario === "admin";
 
   /**
+   * Verifica si el usuario actual es repartidor
+   * @returns {boolean}
+   */
+  const esRepartidor = () => tipoUsuario === "repartidor";
+
+  /**
    * Obtiene el usuario actual
    * @returns {string|null}
    */
   const obtenerUsuario = () => usuarioAutenticado;
+
+  /**
+   * Obtiene los datos adicionales del usuario (nombre, zona, etc)
+   * @returns {object|null}
+   */
+  const obtenerDatosUsuario = () => usuarioData;
 
   return (
     <AuthContext.Provider
@@ -76,7 +117,9 @@ export function AuthProvider({ children }) {
         login,
         logout,
         esAdmin,
-        obtenerUsuario
+        esRepartidor,
+        obtenerUsuario,
+        obtenerDatosUsuario
       }}
     >
       {children}

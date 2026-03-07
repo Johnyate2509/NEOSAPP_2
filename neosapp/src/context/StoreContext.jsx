@@ -122,7 +122,11 @@ export function StoreProvider({ children }) {
   // ============================================
   // 🚗 REPARTIDORES - Gestión de entregas
   // ============================================
-  const [repartidores, setRepartidores] = useState([]);
+  const [repartidores, setRepartidores] = useState([
+    { id: 1, nombre: "Carlos Rodríguez", zona: "Norte", pedidosAsignados: 0 },
+    { id: 2, nombre: "David García", zona: "Sur", pedidosAsignados: 0 },
+    { id: 3, nombre: "Elena Martínez", zona: "Oriente", pedidosAsignados: 0 }
+  ]);
 
   // ============================================
   // 👨‍💼 VENDEDORES - Gestión por zonas
@@ -170,6 +174,33 @@ export function StoreProvider({ children }) {
   // ============================================
   // 📋 PEDIDOS - Órdenes y seguimiento
   // ============================================
+  // Helper: modificar transacción de pedido en cliente
+  const actualizarTransaccionPedido = (clienteNombre, pedidoId, nuevoTotal, formaPago) => {
+    setClientes((clientesPrev) =>
+      clientesPrev.map((c) => {
+        if (c.nombre !== clienteNombre) return c;
+        // Sólo ajusta transacción si existe y si pago no es efectivo
+        if (formaPago === "Efectivo") return c;
+
+        const transaccionesActualizadas = c.transacciones.map((t) => {
+          if (t.tipo === "pedido" && t.pedidoId === pedidoId) {
+            return {
+              ...t,
+              monto: nuevoTotal,
+              descripcion: `Pedido #${pedidoId} - ${formaPago}`
+            };
+          }
+          return t;
+        });
+
+        return {
+          ...c,
+          transacciones: transaccionesActualizadas
+        };
+      })
+    );
+  };
+
   const [pedidos, setPedidos] = useState([
     {
       id: 1,
@@ -180,7 +211,7 @@ export function StoreProvider({ children }) {
       estado: "En camino",
       fecha: "10/02/2026",
       formaPago: "Crédito",
-      repartidor: "Carlos"
+      repartidor: "Carlos Rodríguez"
     },
     {
       id: 2,
@@ -314,7 +345,7 @@ export function StoreProvider({ children }) {
   };
 
   /**
-   * Elimina un pedido y restaura el stock
+   * Elimina un pedido y restaura el stock y saldo del cliente
    * @param {number} id - ID del pedido a eliminar
    */
   const eliminarPedido = (id) => {
@@ -330,7 +361,25 @@ export function StoreProvider({ children }) {
       return prod;
     });
 
+    // Restaurar saldo del cliente si es Crédito o Abono
+    let clientesActualizados = [...clientes];
+    if (pedido.formaPago === "Crédito" || pedido.formaPago === "Abono") {
+      clientesActualizados = clientes.map((c) => {
+        if (c.nombre === pedido.cliente) {
+          return {
+            ...c,
+            saldo: c.saldo - pedido.total,
+            transacciones: c.transacciones.filter(
+              (t) => !(t.tipo === "pedido" && t.pedidoId === id)
+            )
+          };
+        }
+        return c;
+      });
+    }
+
     setProductos(productosActualizados);
+    setClientes(clientesActualizados);
     setPedidos(pedidos.filter((p) => p.id !== id));
   };
 
@@ -345,6 +394,238 @@ export function StoreProvider({ children }) {
         p.id === id ? { ...p, repartidor: repartidorNombre } : p
       )
     );
+  };
+
+  /**
+   * Agrega un item a un pedido existente y actualiza saldo del cliente
+   * @param {number} pedidoId - ID del pedido
+   * @param {number} productoId - ID del producto a agregar
+   * @param {string} nombreProducto - Nombre del producto
+   * @param {number} precio - Precio del producto
+   * @param {number} cantidad - Cantidad a agregar (default 1)
+   */
+  const agregarItemPedido = (pedidoId, productoId, nombreProducto, precio, cantidad = 1) => {
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) return { error: "Pedido no encontrado" };
+
+    // Verificar stock disponible
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto || producto.stock < cantidad) {
+      return { error: "Stock insuficiente para este producto" };
+    }
+
+    // Buscar si el item ya existe en el pedido
+    const itemExistente = pedido.items.find((item) => item.id === productoId);
+    
+    let itemsActualizado;
+    if (itemExistente) {
+      // Si existe, aumentar la cantidad
+      itemsActualizado = pedido.items.map((item) =>
+        item.id === productoId
+          ? { ...item, cantidad: item.cantidad + cantidad }
+          : item
+      );
+    } else {
+      // Si no existe, agregar el nuevo item
+      itemsActualizado = [
+        ...pedido.items,
+        {
+          id: productoId,
+          nombre: nombreProducto,
+          precio,
+          cantidad
+        }
+      ];
+    }
+
+    // Calcular nuevo total
+    const nuevoTotal = itemsActualizado.reduce(
+      (acc, item) => acc + item.precio * item.cantidad,
+      0
+    );
+
+    // Calcular diferencia de total
+    const diferenciaMonto = nuevoTotal - pedido.total;
+
+    // Actualizar stock del producto
+    const productosActualizados = productos.map((p) =>
+      p.id === productoId
+        ? { ...p, stock: p.stock - cantidad }
+        : p
+    );
+
+    // Actualizar saldo del cliente solo si es Crédito o Abono
+    let clientesActualizados = [...clientes];
+    if ((pedido.formaPago === "Crédito" || pedido.formaPago === "Abono") && diferenciaMonto !== 0) {
+      clientesActualizados = clientes.map((c) => {
+        if (c.nombre === pedido.cliente) {
+          return {
+            ...c,
+            saldo: c.saldo + diferenciaMonto
+          };
+        }
+        return c;
+      });
+    }
+
+    // Actualizar el pedido
+    const pedidosActualizados = pedidos.map((p) =>
+      p.id === pedidoId
+        ? { ...p, items: itemsActualizado, total: nuevoTotal }
+        : p
+    );
+
+    setProductos(productosActualizados);
+    setClientes(clientesActualizados);
+    setPedidos(pedidosActualizados);
+
+    // actualizar registro de pedido si existe (para crédito/abono)
+    actualizarTransaccionPedido(pedido.cliente, pedidoId, nuevoTotal, pedido.formaPago);
+
+    return { success: true, mensaje: "Item agregado al pedido" };
+  };
+
+  /**
+   * Elimina un item de un pedido y actualiza saldo del cliente
+   * @param {number} pedidoId - ID del pedido
+   * @param {number} productoId - ID del producto a eliminar
+   */
+  const eliminarItemPedido = (pedidoId, productoId) => {
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) return { error: "Pedido no encontrado" };
+
+    const item = pedido.items.find((i) => i.id === productoId);
+    if (!item) return { error: "Item no encontrado en el pedido" };
+
+    // Restaurar stock del producto
+    const productosActualizados = productos.map((p) =>
+      p.id === productoId
+        ? { ...p, stock: p.stock + item.cantidad }
+        : p
+    );
+
+    // Eliminar item del pedido
+    const itemsActualizado = pedido.items.filter((i) => i.id !== productoId);
+
+    // Calcular nuevo total
+    const nuevoTotal = itemsActualizado.reduce(
+      (acc, item) => acc + item.precio * item.cantidad,
+      0
+    );
+
+    // Calcular diferencia de total
+    const diferenciaMonto = nuevoTotal - pedido.total;
+
+    // Actualizar saldo del cliente solo si es Crédito o Abono
+    let clientesActualizados = [...clientes];
+    if ((pedido.formaPago === "Crédito" || pedido.formaPago === "Abono") && diferenciaMonto !== 0) {
+      clientesActualizados = clientes.map((c) => {
+        if (c.nombre === pedido.cliente) {
+          return {
+            ...c,
+            saldo: c.saldo + diferenciaMonto
+          };
+        }
+        return c;
+      });
+    }
+
+    // Actualizar el pedido
+    const pedidosActualizados = pedidos.map((p) =>
+      p.id === pedidoId
+        ? { ...p, items: itemsActualizado, total: nuevoTotal }
+        : p
+    );
+
+    setProductos(productosActualizados);
+    setClientes(clientesActualizados);
+    setPedidos(pedidosActualizados);
+
+    // actualizar transacción existente
+    actualizarTransaccionPedido(pedido.cliente, pedidoId, nuevoTotal, pedido.formaPago);
+
+    return { success: true, mensaje: "Item eliminado del pedido" };
+  };
+
+  /**
+   * Actualiza la cantidad de un item en un pedido y actualiza saldo del cliente
+   * @param {number} pedidoId - ID del pedido
+   * @param {number} productoId - ID del producto
+   * @param {number} nuevaCantidad - Nueva cantidad (debe ser > 0)
+   */
+  const actualizarCantidadItemPedido = (pedidoId, productoId, nuevaCantidad) => {
+    if (nuevaCantidad <= 0) {
+      return eliminarItemPedido(pedidoId, productoId);
+    }
+
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) return { error: "Pedido no encontrado" };
+
+    const item = pedido.items.find((i) => i.id === productoId);
+    if (!item) return { error: "Item no encontrado en el pedido" };
+
+    const diferenciaCantidad = nuevaCantidad - item.cantidad;
+
+    // Verificar que hay stock disponible si es un aumento
+    if (diferenciaCantidad > 0) {
+      const producto = productos.find((p) => p.id === productoId);
+      if (!producto || producto.stock < diferenciaCantidad) {
+        return { error: "Stock insuficiente para aumentar la cantidad" };
+      }
+    }
+
+    // Actualizar cantidad del item
+    const itemsActualizado = pedido.items.map((i) =>
+      i.id === productoId
+        ? { ...i, cantidad: nuevaCantidad }
+        : i
+    );
+
+    // Actualizar stock del producto
+    const productosActualizados = productos.map((p) =>
+      p.id === productoId
+        ? { ...p, stock: p.stock - diferenciaCantidad }
+        : p
+    );
+
+    // Calcular nuevo total
+    const nuevoTotal = itemsActualizado.reduce(
+      (acc, item) => acc + item.precio * item.cantidad,
+      0
+    );
+
+    // Calcular diferencia de total
+    const diferenciaMonto = nuevoTotal - pedido.total;
+
+    // Actualizar saldo del cliente solo si es Crédito o Abono
+    let clientesActualizados = [...clientes];
+    if ((pedido.formaPago === "Crédito" || pedido.formaPago === "Abono") && diferenciaMonto !== 0) {
+      clientesActualizados = clientes.map((c) => {
+        if (c.nombre === pedido.cliente) {
+          return {
+            ...c,
+            saldo: c.saldo + diferenciaMonto
+          };
+        }
+        return c;
+      });
+    }
+
+    // Actualizar el pedido
+    const pedidosActualizados = pedidos.map((p) =>
+      p.id === pedidoId
+        ? { ...p, items: itemsActualizado, total: nuevoTotal }
+        : p
+    );
+
+    setProductos(productosActualizados);
+    setClientes(clientesActualizados);
+    setPedidos(pedidosActualizados);
+
+    // registrar cambios en transacción
+    actualizarTransaccionPedido(pedido.cliente, pedidoId, nuevoTotal, pedido.formaPago);
+
+    return { success: true, mensaje: "Cantidad actualizada" };
   };
 
   // ============================================
@@ -458,26 +739,42 @@ export function StoreProvider({ children }) {
   };
 
   /**
-   * Registra un pago para un cliente
+   * Registra un pago (o abono) para un cliente.
+   * Métodos posibles: "efectivo", "consignacion", "credito".
+   * - efectivo: reduce saldo inmediatamente
+   * - consignacion: similar a efectivo pero queda registro del método
+   * - credito: registra incremento de saldo (cliente adeuda)
+   *
    * @param {number} clienteId - ID del cliente
-   * @param {number} monto - Monto a pagar
-   * @param {string} descripcion - Descripción del pago
+   * @param {number} monto - Monto de la transacción
+   * @param {string} metodo - "efectivo" | "consignacion" | "credito"
+   * @param {string} descripcion - Descripción adicional
    */
-  const registrarPago = (clienteId, monto, descripcion = "Pago") => {
+  const registrarPago = (clienteId, monto, metodo = "efectivo", descripcion = "Pago") => {
+    if (monto <= 0) return;
+
     const clientesActualizados = clientes.map((c) => {
-      if (c.id === clienteId && monto > 0) {
+      if (c.id === clienteId) {
         const transaccionId = c.transacciones.length > 0
           ? Math.max(...c.transacciones.map((t) => t.id)) + 1
           : 1;
 
+        // calcular saldo según método
+        let nuevoSaldo = c.saldo;
+        if (metodo === "efectivo" || metodo === "consignacion") {
+          nuevoSaldo = c.saldo - monto;
+        } else if (metodo === "credito") {
+          nuevoSaldo = c.saldo + monto;
+        }
+
         return {
           ...c,
-          saldo: c.saldo - monto,
+          saldo: nuevoSaldo,
           transacciones: [
             ...c.transacciones,
             {
               id: transaccionId,
-              tipo: "pago",
+              tipo: metodo,
               monto: monto,
               fecha: new Date().toLocaleDateString(),
               descripcion
@@ -598,7 +895,10 @@ export function StoreProvider({ children }) {
         crearPedido,
         cambiarEstadoPedido,
         eliminarPedido,
-        asignarRepartidor
+        asignarRepartidor,
+        agregarItemPedido,
+        eliminarItemPedido,
+        actualizarCantidadItemPedido
       }}
     >
       {children}

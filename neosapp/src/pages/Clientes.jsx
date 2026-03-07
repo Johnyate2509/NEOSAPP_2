@@ -6,6 +6,7 @@ export default function Clientes() {
   const { clientes, pedidos, registrarPago, actualizarClienteTelefono } = useStore();
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState(null);
   const [montoPago, setMontoPago] = useState("");
+  const [metodoPago, setMetodoPago] = useState("efectivo");
   const [descripcionPago, setDescripcionPago] = useState("");
   const [telefonoTemporal, setTelefonoTemporal] = useState("");
 
@@ -25,10 +26,11 @@ export default function Clientes() {
     }
 
     const descripcion = descripcionPago.trim() || "Pago/Abono";
-    registrarPago(clienteSeleccionado.id, parseFloat(montoPago), descripcion);
+    registrarPago(clienteSeleccionado.id, parseFloat(montoPago), metodoPago, descripcion);
     
     setMontoPago("");
     setDescripcionPago("");
+    setMetodoPago("efectivo");
     alert("Pago registrado correctamente");
   };
 
@@ -138,6 +140,14 @@ export default function Clientes() {
                     onChange={(e) => setMontoPago(e.target.value)}
                     min="0"
                   />
+                  <select
+                    value={metodoPago}
+                    onChange={(e) => setMetodoPago(e.target.value)}
+                  >
+                    <option value="efectivo">Efectivo</option>
+                    <option value="consignacion">Consignación</option>
+                    <option value="credito">Crédito</option>
+                  </select>
                   <input
                     type="text"
                     placeholder="Descripción (Ej: Abono anticipado, Consignación)"

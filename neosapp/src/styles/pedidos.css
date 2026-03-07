@@ -197,3 +197,256 @@
   background: #eaf2ff;
   color: #2980b9;
 }
+
+/* ================================
+   EDICIÓN DE ITEMS
+   ================================ */
+
+.pedido-header-acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-editar {
+  background: #e3f2fd;
+  border: 1px solid #1e40af;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1e40af;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-editar:hover {
+  background: #1e40af;
+  color: white;
+}
+
+/* ITEMS EDITABLE */
+.pedido-items-editable {
+  border: 2px solid #1e40af;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f0f5ff;
+}
+
+.pedido-items-editable h5 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pedido-item-editable {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.pedido-item-editable .item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.item-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.item-precio-unitario {
+  font-size: 11px;
+  color: #999;
+}
+
+.item-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.btn-cantidad {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  transition: all 0.2s ease;
+  min-width: 32px;
+}
+
+.btn-cantidad:hover:not(:disabled) {
+  background: #1e40af;
+  color: white;
+  border-color: #1e40af;
+}
+
+.btn-cantidad:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cantidad-input {
+  width: 50px;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cantidad-input:focus {
+  outline: none;
+  border-color: #1e40af;
+}
+
+.item-subtotal {
+  min-width: 80px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.btn-eliminar-item {
+  background: #fdeaea;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-eliminar-item:hover {
+  background: #ffcccc;
+  transform: scale(1.1);
+}
+
+/* AGREGAR ITEM */
+.agregar-item-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.agregar-item-container label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.select-agregar {
+  padding: 8px;
+  border: 1px solid #1e40af;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-agregar:hover {
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.select-agregar:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+/* BOTONES EDICIÓN */
+.edicion-botones {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn-guardar {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-guardar:hover {
+  background: #229954;
+  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .lista-pedidos {
+    grid-template-columns: 1fr;
+  }
+
+  .pedido-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .pedido-header-acciones {
+    width: 100%;
+  }
+
+  .btn-editar,
+  .btn-delete {
+    flex: 1;
+  }
+
+  .pedido-item-editable {
+    flex-wrap: wrap;
+  }
+
+  .item-controls {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .item-subtotal {
+    order: 4;
+    width: 100%;
+  }
+
+  .btn-eliminar-item {
+    order: 5;
+  }
+}

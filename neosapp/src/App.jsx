@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Pedidos from "./pages/Pedidos";
 import Repartidores from "./pages/Repartidores";
+import RepartidorPerfil from "./pages/RepartidorPerfil";
 import Vendedores from "./pages/Vendedores";
 import Mapa from "./pages/Mapa";
 import Clientes from "./pages/Clientes";
@@ -17,13 +18,33 @@ import Productos from "./pages/Producto";
 
 
 export default function App() {
-  const { usuarioAutenticado } = useAuth();
+  const { usuarioAutenticado, esRepartidor } = useAuth();
 
   // Si no está autenticado, mostrar login
   if (!usuarioAutenticado) {
     return <Login />;
   }
 
+  // Vista especial para repartidores (sin sidebar de admin)
+  if (esRepartidor()) {
+    return (
+      <div className="app">
+        <div className="main">
+          <Header />
+
+          <div className="content">
+            <Routes>
+              <Route path="/" element={<RepartidorPerfil />} />
+              <Route path="/perfil" element={<RepartidorPerfil />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista normal para admin y clientes
   return (
     <div className="app">
       <Sidebar />
