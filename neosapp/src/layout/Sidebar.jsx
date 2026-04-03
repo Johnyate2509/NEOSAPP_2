@@ -2,17 +2,19 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar() {
-  const { esAdmin } = useAuth();
+  const { esAdmin, esVendedor, esRepartidor } = useAuth();
   const esAdministrador = esAdmin();
+  const esVend = esVendedor();
+  const esRepar = esRepartidor();
 
   return (
     <aside className="sidebar">
       <h2 className="logo">NEOSAPP</h2>
 
       <nav>
-        {/* Menú principal */}
+        {/* Dashboard según tipo de usuario */}
         <NavLink to="/" end>
-          {esAdministrador ? " Dashboard" : " Productos"}
+          {esAdministrador ? " Dashboard" : esVend ? " Mi Cartera" : esRepar ? " Entregas" : " Productos"}
         </NavLink>
 
         {/* Clientes - solo para admin */}
@@ -20,6 +22,18 @@ export default function Sidebar() {
           <NavLink to="/clientes">
              Clientes
           </NavLink>
+        )}
+
+        {/* Pedidos - para vendedor */}
+        {esVend && (
+          <>
+            <NavLink to="/vendedor-pedidos">
+               Tienda de Productos
+            </NavLink>
+            <NavLink to="/vendedor-reportes">
+               📊 Reportes
+            </NavLink>
+          </>
         )}
 
         {/* Menú administrativo - solo para admin */}

@@ -13,8 +13,9 @@ const CATEGORIAS = [
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
-  const { productos, setProductos, crearProducto, actualizarStock, agotarProducto, crearPedido } = useStore();
-  const { esAdmin } = useAuth();
+  const { productos, setProductos, crearProducto, actualizarStock, agotarProducto, crearPedido, clientes } = useStore();
+  const { esAdmin, esVendedor, obtenerDatosUsuario } = useAuth();
+  const vendedorData = obtenerDatosUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevo, setNuevo] = useState({
     nombre: "",
@@ -40,9 +41,9 @@ export default function Producto() {
   // Estados para el carrito
   const [carrito, setCarrito] = useState([]);
   const [mostrarModalPedido, setMostrarModalPedido] = useState(false);
-  const [mostrarModalCantidad, setMostrarModalCantidad] = useState(false);
-  const [productoCantidad, setProductoCantidad] = useState(null);
-  const [cantidadInput, setCantidadInput] = useState(1);
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
   const [datosCliente, setDatosCliente] = useState({
     cedula: "",
     nombre: "",
@@ -156,63 +157,16 @@ export default function Producto() {
   const agregarAlCarrito = (producto) => {
     if (producto.stock <= 0) return;
 
-    if (esAdmin()) {
-      // Los administradores pueden agregar directamente
-      const productoEnCarrito = carrito.find((p) => p.id === producto.id);
+    // Verificar si ya está en el carrito
+    const productoEnCarrito = carrito.find((p) => p.id === producto.id);
 
-      if (productoEnCarrito) {
-        if (productoEnCarrito.cantidad < producto.stock) {
-          setCarrito(
-            carrito.map((p) =>
-              p.id === producto.id
-                ? { ...p, cantidad: p.cantidad + 1 }
-                : p
-            )
-          );
-        }
-      } else {
-        setCarrito([...carrito, { ...producto, cantidad: 1 }]);
-      }
-    } else {
-      // Los clientes deben especificar la cantidad
-      setProductoCantidad(producto);
-      setCantidadInput(1);
-      setMostrarModalCantidad(true);
+    if (!productoEnCarrito) {
+      // Agregar con cantidad 0 para que el usuario la especifique en el carrito
+      setCarrito([...carrito, { ...producto, cantidad: 0 }]);
     }
   };
 
-  const confirmarAgregarCantidad = () => {
-    if (!productoCantidad || cantidadInput <= 0) return;
 
-    if (cantidadInput > productoCantidad.stock) {
-      alert(`No hay suficiente stock. Stock disponible: ${productoCantidad.stock}`);
-      return;
-    }
-
-    const productoEnCarrito = carrito.find((p) => p.id === productoCantidad.id);
-
-    if (productoEnCarrito) {
-      const nuevaCantidad = productoEnCarrito.cantidad + cantidadInput;
-      if (nuevaCantidad > productoCantidad.stock) {
-        alert(`No hay suficiente stock. Máximo disponible: ${productoCantidad.stock}`);
-        return;
-      }
-      setCarrito(
-        carrito.map((p) =>
-          p.id === productoCantidad.id
-            ? { ...p, cantidad: nuevaCantidad }
-            : p
-        )
-      );
-    } else {
-      setCarrito([...carrito, { ...productoCantidad, cantidad: cantidadInput }]);
-    }
-
-    setMostrarModalCantidad(false);
-    setProductoCantidad(null);
-    setCantidadInput(1);
-    alert("✅ Producto agregado al carrito");
-  };
 
   const eliminarDelCarrito = (productoId) => {
     setCarrito(carrito.filter((p) => p.id !== productoId));
@@ -236,6 +190,50 @@ export default function Producto() {
 
   const calcularTotal = () => {
     return carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+  };
+
+  // Obtener clientes según el rol del usuario
+  const obtenerClientesFiltrados = () => {
+    let clientesFiltrados = clientes;
+    
+    // Si es vendedor, mostrar solo sus clientes
+    if (esVendedor()) {
+      clientesFiltrados = clientes.filter(c => vendedorData?.clientesIds?.includes(c.id));
+    }
+    
+    // Filtrar por búsqueda
+    if (busquedaCliente.trim()) {
+      const busqueda = busquedaCliente.toLowerCase();
+      clientesFiltrados = clientesFiltrados.filter(c => 
+        c.nombre.toLowerCase().includes(busqueda) || 
+        c.cedula.includes(busqueda)
+      );
+    }
+    
+    return clientesFiltrados;
+  };
+
+  const seleccionarCliente = (cliente) => {
+    setClienteSeleccionado(cliente);
+    setDatosCliente({
+      cedula: cliente.cedula,
+      nombre: cliente.nombre,
+      direccion: cliente.direccion,
+      formaPago: FORMAS_PAGO[0],
+    });
+    setBusquedaCliente("");
+    setMostrarListaClientes(false);
+  };
+
+  const limpiarSeleccionCliente = () => {
+    setClienteSeleccionado(null);
+    setBusquedaCliente("");
+    setDatosCliente({
+      cedula: "",
+      nombre: "",
+      direccion: "",
+      formaPago: FORMAS_PAGO[0],
+    });
   };
 
   const finalizarPedido = () => {
@@ -618,7 +616,6 @@ export default function Producto() {
                         setCarrito([...carrito, { ...productoDetalles, cantidad: cantidadDetalles }]);
                       }
 
-                      alert("✅ Producto agregado al carrito");
                       setMostrarDetalles(false);
                       setCantidadDetalles(1);
                     }}
@@ -633,67 +630,7 @@ export default function Producto() {
         </div>
       )}
 
-      {/* Modal para seleccionar cantidad */}
-      {mostrarModalCantidad && productoCantidad && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Cantidad de productos</h3>
-            <p style={{ marginBottom: "16px", color: "#666" }}>
-              <strong>{productoCantidad.nombre}</strong>
-            </p>
-            <p style={{ marginBottom: "16px", fontSize: "14px", color: "#888" }}>
-              Stock disponible: {productoCantidad.stock} unidades
-            </p>
 
-            <div className="cantidad-selector">
-              <label>¿Cuántos deseas agregar?</label>
-              <div className="cantidad-input-group">
-                <button
-                  onClick={() => setCantidadInput(Math.max(1, cantidadInput - 1))}
-                  className="btn-cantidad"
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  value={cantidadInput}
-                  onChange={(e) => {
-                    const valor = Number(e.target.value);
-                    if (valor > 0) setCantidadInput(valor);
-                  }}
-                  min="1"
-                  max={productoCantidad.stock}
-                  className="cantidad-input"
-                />
-                <button
-                  onClick={() => setCantidadInput(Math.min(productoCantidad.stock, cantidadInput + 1))}
-                  className="btn-cantidad"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                onClick={() => {
-                  setMostrarModalCantidad(false);
-                  setProductoCantidad(null);
-                  setCantidadInput(1);
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={confirmarAgregarCantidad}
-              >
-                Agregar al carrito
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal para finalizar pedido */}
       {mostrarModalPedido && (
@@ -720,7 +657,7 @@ export default function Producto() {
                       </button>
                       <input
                         type="number"
-                        min="1"
+                        min="0"
                         value={item.cantidad}
                         onChange={(e) =>
                           actualizarCantidad(item.id, Number(e.target.value))
@@ -752,29 +689,90 @@ export default function Producto() {
 
             <div className="formulario-cliente">
               <h4>Datos del cliente:</h4>
-              <input
-                placeholder="Cédula o NIT"
-                value={datosCliente.cedula}
-                onChange={(e) =>
-                  setDatosCliente({ ...datosCliente, cedula: e.target.value })
-                }
-              />
+              
+              {(esAdmin() || esVendedor()) ? (
+                <div className="busqueda-cliente">
+                  <div className="busqueda-input-wrapper">
+                    <input
+                      type="text"
+                      placeholder="Buscar cliente por nombre o cédula..."
+                      value={busquedaCliente}
+                      onChange={(e) => {
+                        setBusquedaCliente(e.target.value);
+                        setMostrarListaClientes(true);
+                      }}
+                      onFocus={() => setMostrarListaClientes(true)}
+                      className="busqueda-input"
+                    />
+                    {clienteSeleccionado && (
+                      <button
+                        className="btn-limpiar-cliente"
+                        onClick={limpiarSeleccionCliente}
+                        title="Limpiar selección"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
 
-              <input
-                placeholder="Nombre del cliente"
-                value={datosCliente.nombre}
-                onChange={(e) =>
-                  setDatosCliente({ ...datosCliente, nombre: e.target.value })
-                }
-              />
+                  {mostrarListaClientes && (
+                    <div className="lista-clientes-dropdown">
+                      {obtenerClientesFiltrados().length > 0 ? (
+                        obtenerClientesFiltrados().map((cliente) => (
+                          <div
+                            key={cliente.id}
+                            className="cliente-opcion"
+                            onClick={() => seleccionarCliente(cliente)}
+                          >
+                            <div className="cliente-info">
+                              <strong>{cliente.nombre}</strong>
+                              <span className="cliente-cedula">{cliente.cedula}</span>
+                            </div>
+                            <small className="cliente-direccion">{cliente.direccion}</small>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="sin-resultados">
+                          {busquedaCliente ? "No se encontraron clientes" : "No hay clientes disponibles"}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-              <input
-                placeholder="Dirección"
-                value={datosCliente.direccion}
-                onChange={(e) =>
-                  setDatosCliente({ ...datosCliente, direccion: e.target.value })
-                }
-              />
+                  {clienteSeleccionado && (
+                    <div className="cliente-seleccionado">
+                      <p><strong>Cliente seleccionado:</strong> {clienteSeleccionado.nombre}</p>
+                      <p><small>{clienteSeleccionado.cedula}</small></p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <input
+                    placeholder="Cédula o NIT"
+                    value={datosCliente.cedula}
+                    onChange={(e) =>
+                      setDatosCliente({ ...datosCliente, cedula: e.target.value })
+                    }
+                  />
+
+                  <input
+                    placeholder="Nombre del cliente"
+                    value={datosCliente.nombre}
+                    onChange={(e) =>
+                      setDatosCliente({ ...datosCliente, nombre: e.target.value })
+                    }
+                  />
+
+                  <input
+                    placeholder="Dirección"
+                    value={datosCliente.direccion}
+                    onChange={(e) =>
+                      setDatosCliente({ ...datosCliente, direccion: e.target.value })
+                    }
+                  />
+                </>
+              )}
 
               <select
                 value={datosCliente.formaPago}
@@ -801,6 +799,18 @@ export default function Producto() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Botón flotante del carrito */}
+      {carrito.length > 0 && (
+        <button
+          className="carrito-flotante"
+          onClick={() => setMostrarModalPedido(true)}
+          title="Ver carrito"
+        >
+          <span className="carrito-icono">🛒</span>
+          <span className="carrito-cantidad">{carrito.length}</span>
+        </button>
       )}
     </div>
   );

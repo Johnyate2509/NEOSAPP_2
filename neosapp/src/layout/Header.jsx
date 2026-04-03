@@ -5,11 +5,20 @@ import "../styles/layout.css";
 
 export default function Header() {
   const navigate = useNavigate();
-  const { obtenerUsuario, esAdmin, logout } = useAuth();
+  const { obtenerDatosUsuario, esAdmin, esVendedor, esRepartidor, logout } = useAuth();
   const [mostrarMenu, setMostrarMenu] = useState(false);
 
-  const usuario = obtenerUsuario();
+  const datosUsuario = obtenerDatosUsuario();
+  const usuario = datosUsuario?.nombre || datosUsuario?.usuario;
   const esAdministrador = esAdmin();
+  const esVend = esVendedor();
+  const esRepar = esRepartidor();
+
+  let tipoUsuario = "Cliente";
+  if (esAdministrador) tipoUsuario = "Administrador";
+  else if (esVend) tipoUsuario = "Vendedor";
+  else if (esRepar) tipoUsuario = "Repartidor";
+
   const iniciales = usuario?.substring(0, 2).toUpperCase() || "U";
 
   const handleLogout = () => {
@@ -17,14 +26,16 @@ export default function Header() {
     navigate("/");
   };
 
+  const tipoClase = esAdministrador ? "admin" : esVend ? "vendedor" : esRepar ? "repartidor" : "cliente";
+
   return (
     <header className="header header-dark">
       <h1>Distribución de Belleza</h1>
 
       <div className="header-right">
         <div className="usuario-info">
-          <span className={`badge-tipo ${esAdministrador ? "admin" : "cliente"}`}>
-            {esAdministrador ? " Administrador" : " Cliente"}
+          <span className={`badge-tipo ${tipoClase}`}>
+            {tipoUsuario}
           </span>
           <span className="usuario-nombre">{usuario}</span>
         </div>
@@ -46,7 +57,7 @@ export default function Header() {
               </div>
               <div className="menu-item disabled">
                 <span className="menu-label">Tipo:</span>
-                <strong>{esAdministrador ? "Administrador" : "Cliente"}</strong>
+                <strong>{tipoUsuario}</strong>
               </div>
               <hr className="menu-divider" />
               <button

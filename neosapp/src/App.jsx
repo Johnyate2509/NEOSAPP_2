@@ -9,6 +9,8 @@ import Pedidos from "./pages/Pedidos";
 import Repartidores from "./pages/Repartidores";
 import RepartidorPerfil from "./pages/RepartidorPerfil";
 import Vendedores from "./pages/Vendedores";
+import VendedorDashboard from "./pages/VendedorDashboard";
+import ReportesVendedor from "./pages/ReportesVendedor";
 import Mapa from "./pages/Mapa";
 import Clientes from "./pages/Clientes";
 import AdminClientes from "./pages/AdminClientes";
@@ -18,7 +20,7 @@ import Productos from "./pages/Producto";
 
 
 export default function App() {
-  const { usuarioAutenticado, esRepartidor } = useAuth();
+  const { usuarioAutenticado, esRepartidor, esVendedor } = useAuth();
 
   // Si no está autenticado, mostrar login
   if (!usuarioAutenticado) {
@@ -36,6 +38,28 @@ export default function App() {
             <Routes>
               <Route path="/" element={<RepartidorPerfil />} />
               <Route path="/perfil" element={<RepartidorPerfil />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista especial para vendedores
+  if (esVendedor()) {
+    return (
+      <div className="app">
+        <Sidebar />
+
+        <div className="main">
+          <Header />
+
+          <div className="content">
+            <Routes>
+              <Route path="/" element={<VendedorDashboard />} />
+              <Route path="/vendedor-pedidos" element={<Productos />} />
+              <Route path="/vendedor-reportes" element={<ReportesVendedor />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>

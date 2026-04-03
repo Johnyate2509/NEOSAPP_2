@@ -53,6 +53,28 @@ export default function Login() {
     }, 500);
   };
 
+  const handleDemoRepartidor = () => {
+    setCargando(true);
+    setTimeout(() => {
+      const resultado = login("Carlos", "9876543210");
+      if (resultado.success) {
+        setCargando(false);
+        navigate("/");
+      }
+    }, 500);
+  };
+
+  const handleDemoVendedor = () => {
+    setCargando(true);
+    setTimeout(() => {
+      const resultado = login("vendedor1", "1111111111");
+      if (resultado.success) {
+        setCargando(false);
+        navigate("/");
+      }
+    }, 500);
+  };
+
   return (
     <div className="login-container">
       <div className="login-box">
@@ -118,11 +140,29 @@ export default function Login() {
           >
             👤 Cliente Demo
           </button>
+          <button
+            type="button"
+            className="btn-demo-repartidor"
+            onClick={handleDemoRepartidor}
+            disabled={cargando}
+          >
+            🚚 Repartidor Demo
+          </button>
+          <button
+            type="button"
+            className="btn-demo-vendedor"
+            onClick={handleDemoVendedor}
+            disabled={cargando}
+          >
+            📊 Vendedor Demo
+          </button>
         </div>
 
         <div className="login-info">
           <p>📌 <strong>Admin:</strong> Usuario: NEOSAPP | Contraseña: 123456789</p>
           <p>📌 <strong>Cliente:</strong> Ingresa cualquier usuario y contraseña</p>
+          <p>📌 <strong>Repartidor:</strong> Usuario: Carlos | Contraseña: 9876543210</p>
+          <p>📌 <strong>Vendedor:</strong> Usuario: vendedor1 | Contraseña: 1111111111</p>
         </div>
       </div>
     </div>

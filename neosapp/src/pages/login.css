@@ -144,7 +144,9 @@
 }
 
 .btn-demo-admin,
-.btn-demo-cliente {
+.btn-demo-cliente,
+.btn-demo-repartidor,
+.btn-demo-vendedor {
   padding: 10px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -173,8 +175,28 @@
   background: #f0f0f0;
 }
 
+.btn-demo-repartidor {
+  color: #27ae60;
+  border-color: #27ae60;
+}
+
+.btn-demo-repartidor:hover:not(:disabled) {
+  background: #f0fff4;
+}
+
+.btn-demo-vendedor {
+  color: #3498db;
+  border-color: #3498db;
+}
+
+.btn-demo-vendedor:hover:not(:disabled) {
+  background: #f0f7ff;
+}
+
 .btn-demo-admin:disabled,
-.btn-demo-cliente:disabled {
+.btn-demo-cliente:disabled,
+.btn-demo-repartidor:disabled,
+.btn-demo-vendedor:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

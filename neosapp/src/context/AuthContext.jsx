@@ -15,9 +15,17 @@ const REPARTIDORES_DATA = [
   { id: 3, usuario: "Elena", cedula: "5544332211", nombre: "Elena Martínez", zona: "Oriente" }
 ];
 
+// Datos de prueba - Vendedores
+const VENDEDORES_DATA = [
+  { id: 1, usuario: "vendedor1", cedula: "1111111111", nombre: "Carlos Rodríguez", zona: "Norte", clientesIds: [1] },
+  { id: 2, usuario: "vendedor2", cedula: "2222222222", nombre: "María López", zona: "Sur", clientesIds: [2] },
+  { id: 3, usuario: "vendedor3", cedula: "3333333333", nombre: "Juan Martínez", zona: "Oriente", clientesIds: [] },
+  { id: 4, usuario: "vendedor4", cedula: "4444444444", nombre: "Sandra García", zona: "Occidente", clientesIds: [] }
+];
+
 export function AuthProvider({ children }) {
   const [usuarioAutenticado, setUsuarioAutenticado] = useState(null);
-  const [tipoUsuario, setTipoUsuario] = useState(null); // "admin", "cliente" o "repartidor"
+  const [tipoUsuario, setTipoUsuario] = useState(null); // "admin", "cliente", "repartidor" o "vendedor"
   const [usuarioData, setUsuarioData] = useState(null); // Datos adicionales del usuario autenticado
 
   /**
@@ -61,7 +69,26 @@ export function AuthProvider({ children }) {
       };
     }
 
-    // Si no es admin ni repartidor, es cliente (permite cualquier usuario/contraseña válidos)
+    // Verificar si es vendedor
+    const vendedor = VENDEDORES_DATA.find(v => v.usuario === usuario && v.cedula === cedula);
+    if (vendedor) {
+      setUsuarioAutenticado(usuario);
+      setTipoUsuario("vendedor");
+      setUsuarioData({ 
+        id: vendedor.id,
+        usuario: vendedor.usuario,
+        nombre: vendedor.nombre,
+        zona: vendedor.zona,
+        clientesIds: vendedor.clientesIds
+      });
+      return { 
+        success: true, 
+        mensaje: `Bienvenido ${vendedor.nombre}`,
+        tipoUsuario: "vendedor"
+      };
+    }
+
+    // Si no es admin, repartidor ni vendedor, es cliente (permite cualquier usuario/contraseña válidos)
     if (usuario.trim() && cedula.trim()) {
       setUsuarioAutenticado(usuario);
       setTipoUsuario("cliente");
@@ -98,6 +125,12 @@ export function AuthProvider({ children }) {
   const esRepartidor = () => tipoUsuario === "repartidor";
 
   /**
+   * Verifica si el usuario actual es vendedor
+   * @returns {boolean}
+   */
+  const esVendedor = () => tipoUsuario === "vendedor";
+
+  /**
    * Obtiene el usuario actual
    * @returns {string|null}
    */
@@ -118,6 +151,7 @@ export function AuthProvider({ children }) {
         logout,
         esAdmin,
         esRepartidor,
+        esVendedor,
         obtenerUsuario,
         obtenerDatosUsuario
       }}

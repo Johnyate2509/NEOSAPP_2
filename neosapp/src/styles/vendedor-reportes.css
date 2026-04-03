@@ -1,0 +1,350 @@
+/* REPORTES VENDEDOR */
+.reportes-vendedor {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.reportes-header {
+  margin-bottom: 32px;
+}
+
+.reportes-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: #111;
+}
+
+.reportes-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* TARJETAS RESUMEN */
+.tarjetas-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.tarjeta-resumen {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tarjeta-resumen .icono {
+  font-size: 32px;
+  min-width: 50px;
+}
+
+.tarjeta-resumen .contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.tarjeta-resumen .label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.tarjeta-resumen .valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3498db;
+}
+
+/* ESTADO PEDIDOS */
+.estado-pedidos {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 32px;
+}
+
+.estado-pedidos h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #111;
+}
+
+.estado-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.estado-card {
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: white;
+}
+
+.estado-card.pendiente {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.estado-card.en-camino {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.estado-card.entregado {
+  background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+.estado-icono {
+  font-size: 28px;
+}
+
+.estado-numero {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.estado-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* TABLA CLIENTES */
+.tabla-clientes {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 32px;
+}
+
+.tabla-clientes h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #111;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.tabla-clientes table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tabla-clientes thead {
+  background: #f8f9fa;
+}
+
+.tabla-clientes th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tabla-clientes td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.tabla-clientes td.nombre {
+  font-weight: 600;
+  color: #111;
+}
+
+.tabla-clientes td.pedidos,
+.tabla-clientes td.saldo {
+  text-align: center;
+}
+
+.saldo-rojo {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.saldo-verde {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.saldo-azul {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.badge-estado {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-estado.estado-rojo {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+.badge-estado.estado-verde {
+  background: rgba(39, 174, 96, 0.2);
+  color: #27ae60;
+}
+
+.badge-estado.estado-azul {
+  background: rgba(52, 152, 219, 0.2);
+  color: #3498db;
+}
+
+.sin-clientes {
+  text-align: center;
+  color: #999;
+  padding: 32px;
+  font-style: italic;
+}
+
+/* ÚLTIMOS PEDIDOS */
+.ultimos-pedidos {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ultimos-pedidos h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #111;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 12px;
+}
+
+.pedidos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.pedido-item {
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.pedido-item:hover {
+  border-color: #3498db;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+}
+
+.pedido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pedido-numero {
+  font-weight: 700;
+  color: #111;
+  font-size: 13px;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.estado-badge.estado-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.estado-badge.estado-en-camino {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.estado-badge.estado-entregado {
+  background: #d4edda;
+  color: #155724;
+}
+
+.pedido-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.pedido-body p {
+  margin: 0;
+}
+
+.pedido-body strong {
+  color: #111;
+  display: block;
+}
+
+.pedido-body .fecha {
+  color: #999;
+  font-size: 11px;
+}
+
+.pedido-body .total {
+  color: #3498db;
+  font-weight: 600;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .reportes-vendedor {
+    padding: 16px;
+  }
+
+  .tarjetas-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .estado-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla-clientes table {
+    font-size: 12px;
+  }
+
+  .tabla-clientes th,
+  .tabla-clientes td {
+    padding: 8px;
+  }
+
+  .pedidos-lista {
+    grid-template-columns: 1fr;
+  }
+}
