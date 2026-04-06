@@ -22,9 +22,24 @@ import Productos from "./pages/Producto";
 export default function App() {
   const { usuarioAutenticado, esRepartidor, esVendedor } = useAuth();
 
-  // Si no está autenticado, mostrar login
+  // Si no está autenticado, mostrar tienda de productos sin sidebar
   if (!usuarioAutenticado) {
-    return <Login />;
+    return (
+      <div className="app">
+        <div className="main">
+          <Header />
+
+          <div className="content">
+            <Routes>
+              <Route path="/" element={<Productos />} />
+              <Route path="/productos" element={<Productos />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Vista especial para repartidores (sin sidebar de admin)
@@ -78,7 +93,7 @@ export default function App() {
 
         <div className="content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Productos />} />
             <Route path="/pedidos" element={<Pedidos />} />
             <Route path="/repartidores" element={<Repartidores />} />
             <Route path="/vendedores" element={<Vendedores />} />

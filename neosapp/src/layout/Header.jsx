@@ -5,7 +5,7 @@ import "../styles/layout.css";
 
 export default function Header() {
   const navigate = useNavigate();
-  const { obtenerDatosUsuario, esAdmin, esVendedor, esRepartidor, logout } = useAuth();
+  const { usuarioAutenticado, obtenerDatosUsuario, esAdmin, esVendedor, esRepartidor, logout } = useAuth();
   const [mostrarMenu, setMostrarMenu] = useState(false);
 
   const datosUsuario = obtenerDatosUsuario();
@@ -24,6 +24,10 @@ export default function Header() {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleLogin = () => {
+    navigate("/login");
   };
 
   const tipoClase = esAdministrador ? "admin" : esVend ? "vendedor" : esRepar ? "repartidor" : "cliente";
@@ -51,21 +55,32 @@ export default function Header() {
 
           {mostrarMenu && (
             <div className="menu-desplegable">
-              <div className="menu-item disabled">
-                <span className="menu-label">Usuario:</span>
-                <strong>{usuario}</strong>
-              </div>
-              <div className="menu-item disabled">
-                <span className="menu-label">Tipo:</span>
-                <strong>{tipoUsuario}</strong>
-              </div>
-              <hr className="menu-divider" />
-              <button
-                className="menu-item logout"
-                onClick={handleLogout}
-              >
-                 Cerrar sesión
-              </button>
+              {usuarioAutenticado ? (
+                <>
+                  <div className="menu-item disabled">
+                    <span className="menu-label">Usuario:</span>
+                    <strong>{usuario}</strong>
+                  </div>
+                  <div className="menu-item disabled">
+                    <span className="menu-label">Tipo:</span>
+                    <strong>{tipoUsuario}</strong>
+                  </div>
+                  <hr className="menu-divider" />
+                  <button
+                    className="menu-item logout"
+                    onClick={handleLogout}
+                  >
+                    Cerrar sesión
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="menu-item login"
+                  onClick={handleLogin}
+                >
+                  Inicio de sesión
+                </button>
+              )}
             </div>
           )}
         </div>
