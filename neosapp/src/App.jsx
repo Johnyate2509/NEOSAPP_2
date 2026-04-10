@@ -93,7 +93,7 @@ export default function App() {
 
         <div className="content">
           <Routes>
-            <Route path="/" element={<Productos />} />
+            <Route path="/" element={<Dashboard/>} />
             <Route path="/pedidos" element={<Pedidos />} />
             <Route path="/repartidores" element={<Repartidores />} />
             <Route path="/vendedores" element={<Vendedores />} />
