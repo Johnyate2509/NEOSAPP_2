@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../context/supabaseClient";
 import "./login.css";
 
 export default function Login() {
@@ -12,67 +13,33 @@ export default function Login() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setCargando(true);
 
-    // Simular un pequeño delay
-    setTimeout(() => {
-      const resultado = login(usuario, cedula);
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("usuario", usuario)
+      .eq("cedula", cedula)
+      .single();
 
-      if (resultado.success) {
-        setCargando(false);
-        navigate("/");
-      } else {
-        setError(resultado.mensaje);
-        setCargando(false);
-      }
-    }, 500);
-  };
+    if (error || !data) {
+      setError("Usuario o contraseña incorrectos");
+      setCargando(false);
+      return;
+    }
 
-  const handleDemoAdmin = () => {
-    setCargando(true);
-    setTimeout(() => {
-      const resultado = login("NEOSAPP", "123456789");
-      if (resultado.success) {
-        setCargando(false);
-        navigate("/");
-      }
-    }, 500);
-  };
+    const resultado = login(data.usuario, data.cedula, data.rol);
 
-  const handleDemoCliente = () => {
-    setCargando(true);
-    setTimeout(() => {
-      const resultado = login("Juan Pérez", "9876543210");
-      if (resultado.success) {
-        setCargando(false);
-        navigate("/");
-      }
-    }, 500);
-  };
+    if (resultado.success) {
+      navigate("/");
+    } else {
+      setError("Error al iniciar sesión");
+    }
 
-  const handleDemoRepartidor = () => {
-    setCargando(true);
-    setTimeout(() => {
-      const resultado = login("Carlos", "9876543210");
-      if (resultado.success) {
-        setCargando(false);
-        navigate("/");
-      }
-    }, 500);
-  };
-
-  const handleDemoVendedor = () => {
-    setCargando(true);
-    setTimeout(() => {
-      const resultado = login("vendedor1", "1111111111");
-      if (resultado.success) {
-        setCargando(false);
-        navigate("/");
-      }
-    }, 500);
+    setCargando(false);
   };
 
   return (
@@ -118,52 +85,6 @@ export default function Login() {
             {cargando ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
-
-        <div className="divider">
-          <span>Demo de prueba</span>
-        </div>
-
-        <div className="demo-buttons">
-          <button
-            type="button"
-            className="btn-demo-admin"
-            onClick={handleDemoAdmin}
-            disabled={cargando}
-          >
-            👨‍💼 Admin Demo
-          </button>
-          <button
-            type="button"
-            className="btn-demo-cliente"
-            onClick={handleDemoCliente}
-            disabled={cargando}
-          >
-            👤 Cliente Demo
-          </button>
-          <button
-            type="button"
-            className="btn-demo-repartidor"
-            onClick={handleDemoRepartidor}
-            disabled={cargando}
-          >
-            🚚 Repartidor Demo
-          </button>
-          <button
-            type="button"
-            className="btn-demo-vendedor"
-            onClick={handleDemoVendedor}
-            disabled={cargando}
-          >
-            📊 Vendedor Demo
-          </button>
-        </div>
-
-        <div className="login-info">
-          <p>📌 <strong>Admin:</strong> Usuario: NEOSAPP | Contraseña: 123456789</p>
-          <p>📌 <strong>Cliente:</strong> Ingresa cualquier usuario y contraseña</p>
-          <p>📌 <strong>Repartidor:</strong> Usuario: Carlos | Contraseña: 9876543210</p>
-          <p>📌 <strong>Vendedor:</strong> Usuario: vendedor1 | Contraseña: 1111111111</p>
-        </div>
       </div>
     </div>
   );

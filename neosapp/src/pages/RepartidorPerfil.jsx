@@ -2,35 +2,58 @@ import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import { useAuth } from "../context/AuthContext";
 import "../styles/repartidor-perfil.css";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export default function RepartidorPerfil() {
-  const { pedidos, cambiarEstadoPedido } = useStore();
   const { obtenerDatosUsuario } = useAuth();
   const [filtroEstado, setFiltroEstado] = useState("Todos");
+  const [pedidos, setPedidos] = useState([]);
 
   const datosRepartidor = obtenerDatosUsuario();
 
-  // Filtrar pedidos asignados a este repartidor
-  const pedidosDelRepartidor = pedidos.filter(
-    (p) => p.repartidor === datosRepartidor.nombre
-  );
+  // Cargar pedidos desde Supabase
+  const cargarPedidos = async () => {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("repartidor", datosRepartidor.nombre);
 
-  // Aplicar filtro de estado
+    if (!error) {
+      setPedidos(data);
+    }
+  };
+
+  useEffect(() => {
+    if (datosRepartidor?.nombre) {
+      cargarPedidos();
+    }
+  }, [datosRepartidor]);
+
+  // Cambiar estado del pedido
+  const cambiarEstadoPedido = async (id, nuevoEstado) => {
+    await supabase
+      .from("pedidos")
+      .update({ estado: nuevoEstado })
+      .eq("id", id);
+
+    cargarPedidos();
+  };
+
+  // Aplicar filtro
   const pedidosFiltrados =
     filtroEstado === "Todos"
-      ? pedidosDelRepartidor
-      : pedidosDelRepartidor.filter((p) => p.estado === filtroEstado);
+      ? pedidos
+      : pedidos.filter((p) => p.estado === filtroEstado);
 
   const estadisticas = {
-    pendientes: pedidosDelRepartidor.filter((p) => p.estado === "Pendiente").length,
-    enCamino: pedidosDelRepartidor.filter((p) => p.estado === "En camino").length,
-    entregados: pedidosDelRepartidor.filter((p) => p.estado === "Entregado").length,
-    total: pedidosDelRepartidor.length,
+    pendientes: pedidos.filter((p) => p.estado === "Pendiente").length,
+    enCamino: pedidos.filter((p) => p.estado === "En camino").length,
+    entregados: pedidos.filter((p) => p.estado === "Entregado").length,
+    total: pedidos.length,
   };
 
   return (
     <div className="repartidor-perfil">
-      {/* Encabezado del Perfil */}
       <div className="perfil-header">
         <div className="perfil-info">
           <div className="avatar">
@@ -44,7 +67,6 @@ export default function RepartidorPerfil() {
         </div>
       </div>
 
-      {/* Estadísticas */}
       <div className="estadisticas-container">
         <div className="estadistica pendiente">
           <h4>Pendientes</h4>
@@ -64,7 +86,6 @@ export default function RepartidorPerfil() {
         </div>
       </div>
 
-      {/* Filtro de Estado */}
       <div className="pedidos-header">
         <h3>Mis Pedidos</h3>
         <div className="filtro-container">
@@ -83,85 +104,35 @@ export default function RepartidorPerfil() {
         </div>
       </div>
 
-      {/* Lista de Pedidos */}
       <div className="pedidos-lista">
         {pedidosFiltrados.length === 0 ? (
           <div className="sin-pedidos">
-            <p>
-              {pedidosDelRepartidor.length === 0
-                ? "No tienes pedidos asignados aún"
-                : `No hay pedidos con estado "${filtroEstado}"`}
-            </p>
+            <p>No tienes pedidos asignados aún</p>
           </div>
         ) : (
           pedidosFiltrados.map((pedido) => (
-            <div key={pedido.id} className={`pedido-card ${pedido.estado.toLowerCase().replace(" ", "-")}`}>
-              {/* Encabezado de la tarjeta */}
+            <div key={pedido.id} className="pedido-card">
               <div className="pedido-card-header">
-                <div className="pedido-numero-estado">
-                  <h4>Pedido #{pedido.id}</h4>
-                  <span className={`estado-badge ${pedido.estado.toLowerCase().replace(" ", "-")}`}>
-                    {pedido.estado}
-                  </span>
-                </div>
-                <div className="pedido-fecha">
-                  📅 {pedido.fecha}
-                </div>
+                <h4>Pedido #{pedido.id}</h4>
+                <span>{pedido.estado}</span>
               </div>
 
-              {/* Información del Cliente y Dirección */}
               <div className="pedido-cliente-info">
-                <div className="cliente-detalle">
-                  <div className="detalle-item">
-                    <label>👤 Cliente:</label>
-                    <p>{pedido.cliente}</p>
-                  </div>
-                  <div className="detalle-item">
-                    <label>📌 Dirección:</label>
-                    <p className="direccion">{pedido.direccion}</p>
-                  </div>
-                  <div className="detalle-item">
-                    <label>💳 Forma de Pago:</label>
-                    <p>
-                      <span className={`pago-badge ${pedido.formaPago.toLowerCase()}`}>
-                        {pedido.formaPago}
-                      </span>
-                    </p>
-                  </div>
-                </div>
+                <p>👤 {pedido.cliente}</p>
+                <p>📌 {pedido.direccion}</p>
               </div>
 
-              {/* Items del Pedido */}
-              <div className="pedido-items">
-                <h5>📦 Productos:</h5>
-                <div className="items-lista">
-                  {pedido.items.map((item, index) => (
-                    <div key={index} className="item-fila">
-                      <div className="item-info">
-                        <span className="item-nombre">{item.nombre}</span>
-                        <span className="item-cantidad">x{item.cantidad}</span>
-                      </div>
-                      <span className="item-precio">
-                        ${(item.precio * item.cantidad).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Total */}
               <div className="pedido-total">
-                <span className="label">Total:</span>
-                <span className="monto">${pedido.total.toLocaleString()}</span>
+                <span>Total:</span>
+                <span>${pedido.total}</span>
               </div>
 
-              {/* Control de Estado */}
               <div className="pedido-control">
-                <label>Actualizar Estado:</label>
                 <select
                   value={pedido.estado}
-                  onChange={(e) => cambiarEstadoPedido(pedido.id, e.target.value)}
-                  className="estado-select"
+                  onChange={(e) =>
+                    cambiarEstadoPedido(pedido.id, e.target.value)
+                  }
                 >
                   <option value="Pendiente">Pendiente</option>
                   <option value="En camino">En camino</option>
