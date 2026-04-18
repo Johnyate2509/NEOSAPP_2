@@ -21,7 +21,7 @@ export default function Login() {
     const { data, error } = await supabase
       .from("usuarios")
       .select("*")
-      .eq("usuario", usuario)
+      .eq("nombre", usuario)   // ← CAMBIO AQUÍ
       .eq("cedula", cedula)
       .single();
 
@@ -31,7 +31,12 @@ export default function Login() {
       return;
     }
 
-    const resultado = login(data.usuario, data.cedula, data.rol);
+    const resultado = login(
+      data.nombre,
+      data.cedula,
+      data.rol,
+      data.zona
+    );
 
     if (resultado.success) {
       navigate("/");
@@ -52,9 +57,8 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
-            <label htmlFor="usuario">Usuario / Razón Social</label>
+            <label>Usuario / Razón Social</label>
             <input
-              id="usuario"
               type="text"
               placeholder="Ej: NEOSAPP"
               value={usuario}
@@ -64,9 +68,8 @@ export default function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="cedula">Contraseña (Cédula / NIT)</label>
+            <label>Contraseña (Cédula / NIT)</label>
             <input
-              id="cedula"
               type="password"
               placeholder="Ej: 123456789"
               value={cedula}
@@ -77,11 +80,7 @@ export default function Login() {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button
-            type="submit"
-            className="btn-login"
-            disabled={cargando}
-          >
+          <button type="submit" disabled={cargando}>
             {cargando ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
