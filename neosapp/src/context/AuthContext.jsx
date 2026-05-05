@@ -168,3 +168,132 @@ export const useAuth = () => {
   }
   return context;
 };
+
+/***const crearProducto = async (nuevo) => {
+  try {
+    let urlsImagenes = [];
+
+    // subir imágenes
+    for (let i = 0; i < nuevo.imagenes.length; i++) {
+      const base64 = nuevo.imagenes[i];
+      const res = await fetch(base64);
+      const blob = await res.blob();
+
+      const fileName = `producto-${Date.now()}-${i}.png`;
+
+      const { error } = await supabase.storage
+        .from("productos")
+        .upload(fileName, blob);
+
+      if (error) continue;
+
+      const { data } = supabase.storage
+        .from("productos")
+        .getPublicUrl(fileName);
+
+      urlsImagenes.push(data.publicUrl);
+    }
+
+    // insertar en DB
+    const { error } = await supabase.from("productos").insert([
+      {
+        nombre: nuevo.nombre,
+        precio: Number(nuevo.precio),
+        stock: Number(nuevo.stock),
+        categoria: nuevo.categoria,
+        descripcion: nuevo.descripcion,
+        imagen_url: urlsImagenes[0] || null,
+      },
+    ]);
+
+    if (error) throw error;
+
+    await cargarProductos();
+
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message };
+  }
+};
+
+const actualizarStock = async (id, cantidad) => {
+  try {
+    const producto = productos.find(p => p.id === id);
+    const nuevoStock = producto.stock + cantidad;
+
+    if (nuevoStock < 0) return false;
+
+    const { error } = await supabase
+      .from("productos")
+      .update({ stock: nuevoStock })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    await cargarProductos();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+
+const eliminarProducto = async (id) => {
+  const { error } = await supabase
+    .from("productos")
+    .delete()
+    .eq("id", id);
+
+  if (!error) {
+    await cargarProductos();
+  }
+};
+
+
+const crearPedido = async (cedula, nombre, direccion, carrito, formaPago) => {
+  try {
+    // 1. crear pedido
+    const { data, error } = await supabase
+      .from("pedidos")
+      .insert([
+        {
+          cedula,
+          nombre,
+          direccion,
+          forma_pago: formaPago,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const pedidoId = data.id;
+
+    // 2. insertar detalle
+    const detalles = carrito.map(item => ({
+      pedido_id: pedidoId,
+      producto_id: item.id,
+      cantidad: item.cantidad,
+      precio: item.precio,
+    }));
+
+    await supabase.from("pedido_detalle").insert(detalles);
+
+    // 3. actualizar stock
+    for (const item of carrito) {
+      await supabase
+        .from("productos")
+        .update({ stock: item.stock - item.cantidad })
+        .eq("id", item.id);
+    }
+
+    await cargarProductos();
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+};
+* */
