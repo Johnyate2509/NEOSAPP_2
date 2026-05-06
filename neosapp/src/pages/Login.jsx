@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../context/supabaseClient";
@@ -6,42 +6,42 @@ import "./login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, login, logout } = useAuth();
 
-  const [usuario, setUsuario] = useState("");
-  const [cedula, setCedula] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setCargando(true);
 
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("*")
-      .eq("nombre", usuario)   // ← CAMBIO AQUÍ
-      .eq("cedula", cedula)
-      .single();
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-    if (error || !data) {
-      setError("Usuario o contraseña incorrectos");
-      setCargando(false);
-      return;
-    }
+      if (error) {
+        setError("Email o contraseña incorrectos");
+        setCargando(false);
+        return;
+      }
 
-    const resultado = login(
-      data.nombre,
-      data.cedula,
-      data.rol,
-      data.zona
-    );
-
-    if (resultado.success) {
+      // El login se maneja automáticamente por AuthContext
       navigate("/");
-    } else {
+    } catch (err) {
       setError("Error al iniciar sesión");
+      console.error("Error de login:", err);
     }
 
     setCargando(false);
@@ -57,24 +57,26 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
-            <label>Usuario / Razón Social</label>
+            <label>Email</label>
             <input
-              type="text"
-              placeholder="Ej: NEOSAPP"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              type="email"
+              placeholder="Ej: admin@neosapp.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={cargando}
+              required
             />
           </div>
 
           <div className="form-group">
-            <label>Contraseña (Cédula / NIT)</label>
+            <label>Contraseña</label>
             <input
               type="password"
-              placeholder="Ej: 123456789"
-              value={cedula}
-              onChange={(e) => setCedula(e.target.value)}
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={cargando}
+              required
             />
           </div>
 

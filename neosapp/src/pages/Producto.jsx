@@ -52,7 +52,7 @@ export default function Producto() {
     numeroCelular: "",
     formaPago: FORMAS_PAGO[0],
   });
-
+//
   const crearProductoHandler = () => {
     if (!nuevo.nombre || !nuevo.precio || !nuevo.stock) {
       alert("Por favor completa nombre, precio y stock");
@@ -67,7 +67,7 @@ export default function Producto() {
       nuevo.descripcion,
       nuevo.imagenes.length > 0 ? nuevo.imagenes : []
     );
-
+//
     if (resultado.error) {
       alert(`Error: ${resultado.error}`);
       return;
@@ -77,8 +77,8 @@ export default function Producto() {
     setImagenesVista([]);
     setMostrarModal(false);
     alert("✅ Producto creado exitosamente");
-  };
-
+  }; 
+ 
   const handleImagenSeleccionada = (e) => {
     const archivos = Array.from(e.target.files);
     const maxImagenes = 5;

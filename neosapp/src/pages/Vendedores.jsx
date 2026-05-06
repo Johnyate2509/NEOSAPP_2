@@ -3,8 +3,16 @@ import { useStore } from "../context/StoreContext";
 import "../styles/vendedores.css";
 
 export default function Vendedores() {
-  const { vendedores, obtenerClientesPorVendedor, calcularVentasPorVendedor } = useStore();
+  const {
+    vendedores,
+    obtenerClientesPorVendedor,
+    calcularVentasPorVendedor,
+    crearVendedor,
+  } = useStore();
   const [vendedorSeleccionado, setVendedorSeleccionado] = useState(null);
+  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevaZona, setNuevaZona] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
   const handleSeleccionarVendedor = (vendedorId) => {
     setVendedorSeleccionado(vendedorSeleccionado === vendedorId ? null : vendedorId);
@@ -15,6 +23,42 @@ export default function Vendedores() {
       <div className="vendedores-header">
         <h2>Gestión de Vendedores</h2>
         <p className="total-vendedores">Total de vendedores: {vendedores.length}</p>
+      </div>
+
+      <div className="vendedores-formulario">
+        <h3>Agregar nuevo vendedor</h3>
+        {mensaje && <div className={`mensaje ${mensaje.includes("✅") ? "exito" : "error"}`}>{mensaje}</div>}
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Nombre del vendedor"
+            value={nuevoNombre}
+            onChange={(e) => setNuevoNombre(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Zona"
+            value={nuevaZona}
+            onChange={(e) => setNuevaZona(e.target.value)}
+          />
+          <button
+            className="btn-crear-vendedor"
+            onClick={async () => {
+              const resultado = await crearVendedor(nuevoNombre.trim(), nuevaZona.trim());
+              if (resultado.error) {
+                setMensaje(`❌ ${resultado.error}`);
+                return;
+              }
+              setMensaje(`✅ Vendedor ${resultado.vendedor.nombre} creado`);
+              setNuevoNombre("");
+              setNuevaZona("");
+              setTimeout(() => setMensaje(""), 3000);
+            }}
+          >
+            <span className="btn-icon">➕</span>
+            Crear vendedor
+          </button>
+        </div>
       </div>
 
       <div className="vendedores-grid">

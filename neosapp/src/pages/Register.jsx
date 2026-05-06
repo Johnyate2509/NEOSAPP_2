@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../context/supabaseClient";
+import { useAuth } from "../context/AuthContext";
 import "./login.css";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
-  const [nombre, setNombre] = useState("");
-  const [cedula, setCedula] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("cliente");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -19,56 +22,38 @@ export default function Register() {
     setCargando(true);
 
     // Validar campos
-    if (!nombre.trim() || !cedula.trim()) {
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Todos los campos son requeridos");
       setCargando(false);
       return;
     }
 
-    if (cedula.length < 5) {
-      setError("El NIT/CC debe tener al menos 5 caracteres");
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      setCargando(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
       setCargando(false);
       return;
     }
 
     try {
-      // Verificar si el usuario ya existe
-      const { data: usuarioExistente } = await supabase
-        .from("usuarios")
-        .select("*")
-        .eq("nombre", nombre)
-        .single();
+      const result = await register(email, password, role);
 
-      if (usuarioExistente) {
-        setError("Este usuario ya existe");
+      if (!result.success) {
+        setError(result.error);
         setCargando(false);
         return;
       }
 
-      // Insertar nuevo usuario
-      const { data, error: insertError } = await supabase
-        .from("usuarios")
-        .insert([
-          {
-            nombre: nombre,
-            cedula: cedula,
-            rol: "cliente", // Por defecto es cliente
-            zona: null, // Los clientes no tienen zona
-          },
-        ])
-        .select();
-
-      if (insertError) {
-        setError("Error al crear el usuario: " + insertError.message);
-        setCargando(false);
-        return;
-      }
-
-      setExito("¡Cuenta creada exitosamente! Redirigiendo al login...");
+      setExito("¡Cuenta creada exitosamente! Revisa tu email para confirmar la cuenta. Redirigiendo al login...");
       
       setTimeout(() => {
         navigate("/login");
-      }, 2000);
+      }, 3000);
 
     } catch (err) {
       setError("Error al procesar el registro: " + err.message);
@@ -87,25 +72,53 @@ export default function Register() {
 
         <form onSubmit={handleRegister} className="login-form">
           <div className="form-group">
-            <label>Usuario (Nombre)</label>
+            <label>Email</label>
             <input
-              type="text"
-              placeholder="Ej: Juan García"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              type="email"
+              placeholder="Ej: usuario@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={cargando}
+              required
             />
           </div>
 
           <div className="form-group">
-            <label>NIT / Cédula</label>
+            <label>Contraseña</label>
             <input
               type="password"
-              placeholder="Ej: 1234567890"
-              value={cedula}
-              onChange={(e) => setCedula(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={cargando}
+              required
             />
+          </div>
+
+          <div className="form-group">
+            <label>Confirmar Contraseña</label>
+            <input
+              type="password"
+              placeholder="Repite tu contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={cargando}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Tipo de Usuario</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={cargando}
+            >
+              <option value="cliente">Cliente</option>
+              <option value="vendedor">Vendedor</option>
+              <option value="repartidor">Repartidor</option>
+              <option value="admin">Administrador</option>
+            </select>
           </div>
 
           {error && <div className="error-message">{error}</div>}
