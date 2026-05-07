@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import "../styles/vendedores.css";
+import { supabase } from "../context/supabaseClient";
+
 
 export default function Vendedores() {
   const {

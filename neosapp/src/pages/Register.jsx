@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../context/supabaseClient";
 import "./login.css";
 
 export default function Register() {
@@ -10,7 +11,10 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("cliente");
+  const [nombre, setNombre] = useState("");
+  const [cedula, setCedula] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -22,7 +26,7 @@ export default function Register() {
     setCargando(true);
 
     // Validar campos
-    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+    if (!email.trim() || !password.trim() || !confirmPassword.trim() || !nombre.trim() || !cedula.trim() || !direccion.trim()) {
       setError("Todos los campos son requeridos");
       setCargando(false);
       return;
@@ -41,7 +45,8 @@ export default function Register() {
     }
 
     try {
-      const result = await register(email, password, role);
+      const metadata = { nombre, cedula, direccion, telefono };
+      const result = await register(email, password, 'cliente', metadata);
 
       if (!result.success) {
         setError(result.error);
@@ -108,17 +113,50 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label>Tipo de Usuario</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+            <label>Nombre Completo</label>
+            <input
+              type="text"
+              placeholder="Tu nombre completo"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               disabled={cargando}
-            >
-              <option value="cliente">Cliente</option>
-              <option value="vendedor">Vendedor</option>
-              <option value="repartidor">Repartidor</option>
-              <option value="admin">Administrador</option>
-            </select>
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Cédula</label>
+            <input
+              type="text"
+              placeholder="Número de cédula"
+              value={cedula}
+              onChange={(e) => setCedula(e.target.value)}
+              disabled={cargando}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Dirección</label>
+            <input
+              type="text"
+              placeholder="Tu dirección"
+              value={direccion}
+              onChange={(e) => setDireccion(e.target.value)}
+              disabled={cargando}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Teléfono</label>
+            <input
+              type="tel"
+              placeholder="Número de teléfono"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              disabled={cargando}
+            />
           </div>
 
           {error && <div className="error-message">{error}</div>}

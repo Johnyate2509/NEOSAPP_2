@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import "../styles/clientes.css";
+import { supabase } from "../context/supabaseClient";
+
 
 export default function Clientes() {
   const { clientes, pedidos, registrarPago, actualizarClienteTelefono } = useStore();

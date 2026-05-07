@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
         setLoading(false);
       }
     );
-
+// LOGIN
     return () => subscription.unsubscribe();
   }, []);
 
@@ -63,6 +63,26 @@ export function AuthProvider({ children }) {
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // Insertar en la tabla correspondiente según el rol
+    if (role === 'cliente') {
+      const clienteData = {
+        nombre: metadata.nombre || '',
+        cedula: metadata.cedula || '',
+        direccion: metadata.direccion || '',
+        telefono: metadata.telefono || '',
+        correo: email,
+      };
+      const { error: insertError } = await supabase
+        .from('clientes')
+        .insert([clienteData]);
+      if (insertError) {
+        console.error('Error insertando cliente:', insertError);
+        // Opcional: eliminar el usuario de auth si falla la inserción
+        return { success: false, error: 'Error al crear el perfil de cliente' };
+      }
+    }
+    // Para otros roles, agregar lógica similar si es necesario
 
     return { success: true, user: data.user };
   };
@@ -116,3 +136,5 @@ export function useAuth() {
   }
   return context;
 }
+
+/// FUNCIONES DE REGISTRAR USUARIO NUEVO (CLIENTE)
