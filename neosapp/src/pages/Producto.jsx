@@ -314,11 +314,11 @@ export default function Producto() {
   const seleccionarCliente = (cliente) => {
     setClienteSeleccionado(cliente);
     setDatosCliente({
-      cedula: cliente.cedula,
-      nombre: cliente.nombre,
-      direccion: cliente.direccion,
-      correoElectronico: cliente.correoElectronico,
-      numeroCelular: cliente.numeroCelular,
+      cedula: cliente.cedula || "",
+      nombre: cliente.nombre || "",
+      direccion: cliente.direccion || "",
+      correoElectronico: cliente.correo || "",
+      numeroCelular: cliente.telefono || "",
       formaPago: FORMAS_PAGO[0],
     });
     setBusquedaCliente("");
