@@ -279,36 +279,70 @@ export function StoreProvider({ children }) {
     return { success: true, vendedor: data };
   };
 
-  const crearCliente = async (
-    nombre,
-    cedula,
-    direccion,
-    telefono = "",
-    correo = "",
-    vendedor_id = null
-  ) => {
-    if (!nombre || !cedula || !direccion) {
-      return { error: "Nombre, cédula y dirección son requeridos" };
-    }
+const crearCliente = async (
+  nombre,
+  cedula,
+  direccion,
+  telefono = "",
+  correo = "",
+  vendedor_id = null,
+  password = "123456"
+) => {
+  if (!nombre || !cedula || !direccion) {
+    return { error: "Nombre, cédula y dirección son requeridos" };
+  }
 
-    const { data, error } = await supabase
-      .from("clientes")
+  // 1. Verificar si ya existe usuario
+  const { data: usuarioExistente } = await supabase
+    .from("usuarios")
+    .select("id")
+    .eq("cedula", cedula)
+    .maybeSingle();
+
+  // 2. Crear usuario si no existe
+  if (!usuarioExistente) {
+    const { error: errorUsuario } = await supabase
+      .from("usuarios")
       .insert([
-        { nombre, cedula, direccion, telefono, correo, vendedor_id },
-      ])
-      .select()
-      .single();
+        {
+          nombre,
+          cedula,
+          email: correo || null,
+          rol: "cliente",
+          password_hash: password,
+        },
+      ]);
 
-    if (error) {
-      console.error("Error creando cliente:", error);
-      return { error: error.message };
+    if (errorUsuario) {
+      console.error("Error creando usuario:", errorUsuario);
+      return { error: errorUsuario.message };
     }
+  }
 
-    setClientes((prev) => [
-      ...prev,
-      { ...data, saldo: data.saldo ?? 0, transacciones: data.transacciones ?? [] },
-    ]);
-    return { success: true, cliente: data };
+  // 3. Crear cliente
+  const { data, error } = await supabase
+    .from("clientes")
+    .insert([
+      { nombre, cedula, direccion, telefono, correo, vendedor_id },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creando cliente:", error);
+    return { error: error.message };
+  }
+
+  setClientes((prev) => [
+    ...prev,
+    {
+      ...data,
+      saldo: data.saldo ?? 0,
+      transacciones: data.transacciones ?? [],
+    },
+  ]);
+
+  return { success: true, cliente: data };
   };
 
   const obtenerClientesPorVendedor = (vendedorId) =>
@@ -514,45 +548,36 @@ export function StoreProvider({ children }) {
     updatePedidoItems(pedidoId, items);
     return true;
   };
-
-  return (
-    <StoreContext.Provider
-      value={{
-        productos,
-        setProductos,
-        clientes,
-        pedidos,
-        repartidores,
-        vendedores,
-        crearProducto,
-        actualizarStock,
-        agotarProducto,
-        crearPedido,
-        crearCliente,
-        crearVendedor,
-        obtenerClientesPorVendedor,
-        calcularVentasPorVendedor,
-        crearRepartidor,
-        eliminarRepartidor,
-        registrarPago,
-        actualizarClienteTelefono,
-        cambiarEstadoPedido,
-        eliminarPedido,
-        asignarRepartidor,
-        agregarItemPedido,
-        eliminarItemPedido,
-        actualizarCantidadItemPedido,
-      }}
-    >
-      {children}
-    </StoreContext.Provider>
-  );
+return (
+  <StoreContext.Provider
+    value={{
+      productos,
+      setProductos,
+      clientes,
+      pedidos,
+      repartidores,
+      vendedores,
+      crearProducto,
+      actualizarStock,
+      agotarProducto,
+      crearPedido,
+      crearCliente,
+      crearVendedor,
+      obtenerClientesPorVendedor,
+      calcularVentasPorVendedor,
+      crearRepartidor,
+      eliminarRepartidor,
+      registrarPago,
+      actualizarClienteTelefono,
+      cambiarEstadoPedido,
+      eliminarPedido,
+      asignarRepartidor,
+      agregarItemPedido,
+      eliminarItemPedido,
+      actualizarCantidadItemPedido,
+    }}
+  >
+    {children}
+  </StoreContext.Provider>
+);
 }
-
-export const useStore = () => {
-  const context = useContext(StoreContext);
-  if (!context) {
-    throw new Error("useStore debe usarse dentro de StoreProvider");
-  }
-  return context;
-};
