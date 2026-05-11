@@ -8,7 +8,15 @@ const CATEGORIAS = [
   "Tratamientos",
   "Cabello",
   "Halloween",
-  "Maquillaje"
+  "Maquillaje",
+  "S. Shop",
+  "Cuerpo",
+  "Cejas y Pestañas",
+  "Uñas y Limas",
+  "Rostro",
+  "Barberia",
+  "Manos y Pies",
+  "Vaselina /Cacao"
 ];
 
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
