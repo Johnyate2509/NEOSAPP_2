@@ -16,7 +16,7 @@ const CATEGORIAS = [
   "Rostro",
   "Barberia",
   "Manos y Pies",
-  "Vaselina /Cacao"
+  "Vaselina/Cacao"
 ];
 
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
