@@ -567,65 +567,6 @@ const crearCliente = async (
     return true;
   };
 
-  // CRUD de Categorías
-  const crearCategoria = async (nombre, descripcion = "") => {
-    if (!nombre || nombre.trim() === "") {
-      return { error: "El nombre de la categoría es requerido" };
-    }
-
-    const { data, error } = await supabase
-      .from("categorias")
-      .insert([{ nombre: nombre.trim(), descripcion }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creando categoría:", error);
-      return { error: error.message };
-    }
-
-    setCategorias((prev) => [...prev, data]);
-    return { success: true, categoria: data };
-  };
-
-  const actualizarCategoria = async (id, nombre, descripcion = "") => {
-    if (!nombre || nombre.trim() === "") {
-      return { error: "El nombre de la categoría es requerido" };
-    }
-
-    const { data, error } = await supabase
-      .from("categorias")
-      .update({ nombre: nombre.trim(), descripcion })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error actualizando categoría:", error);
-      return { error: error.message };
-    }
-
-    setCategorias((prev) =>
-      prev.map((cat) => (cat.id === id ? data : cat))
-    );
-    return { success: true, categoria: data };
-  };
-
-  const eliminarCategoria = async (id) => {
-    const { error } = await supabase
-      .from("categorias")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Error eliminando categoría:", error);
-      return { error: error.message };
-    }
-
-    setCategorias((prev) => prev.filter((cat) => cat.id !== id));
-    return { success: true };
-  };
-
 return (
   <StoreContext.Provider
     value={{
@@ -654,9 +595,6 @@ return (
       agregarItemPedido,
       eliminarItemPedido,
       actualizarCantidadItemPedido,
-      crearCategoria,
-      actualizarCategoria,
-      eliminarCategoria,
       cargandoCategorias,
     }}
   >
