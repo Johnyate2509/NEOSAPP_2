@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import "../styles/admin-clientes.css";
 import { supabase } from "../context/supabaseClient";
+import brebImage from "../components/img/breb.jpg";
 
 
 export default function AdminClientes() {
@@ -59,6 +60,10 @@ export default function AdminClientes() {
         <button className="btn-crear" onClick={() => setMostrarForm(!mostrarForm)}>
           {mostrarForm ? "✕ Cancelar" : "+ Crear Cliente"}
         </button>
+      </div>
+
+      <div className="info-image-container">
+        <img src={brebImage} alt="Información sobre pedidos y gestión de clientes" />
       </div>
 
       {/* Formulario de creación */}
