@@ -620,6 +620,102 @@
   }
 }
 
+/* VALIDACIONES Y ERRORES */
+.errores-validacion {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  color: #856404;
+}
+
+.errores-validacion h5 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.errores-validacion ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.errores-validacion li {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+/* DATOS DE CONTACTO */
+.datos-contacto {
+  background: #f0f7ff;
+  border-left: 4px solid #2196F3;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.datos-contacto h5 {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1976D2;
+}
+
+.contacto-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.input-email,
+.input-telefono {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.input-email:focus,
+.input-telefono:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.form-group small {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* BOTONES MEJORADOS */
+.btn-confirmar-pedido:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #cccccc;
+}
+
+.btn-confirmar-pedido:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 @media (max-width: 640px) {
   .vendedor-dashboard {
     padding: 16px;
@@ -640,5 +736,9 @@
 
   .clientes-scroll {
     max-height: 400px;
+  }
+
+  .contacto-fields {
+    grid-template-columns: 1fr;
   }
 }

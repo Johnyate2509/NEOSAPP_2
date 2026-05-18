@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
+import { validarDatosPedido, validarCarrito, calcularTotal } from "../utils/validaciones";
+import { enviarConfirmacionPedido, enviarNotificacionVendedor } from "../services/emailService";
 
 const StoreContext = createContext(null);
 
@@ -217,10 +219,39 @@ const { data, error } = await supabase
     return true;
   };
 
-  const crearPedido = async (cedula, nombre, direccion, carrito, formaPago) => {
+  const crearPedido = async (cedula, nombre, direccion, carrito, formaPago, emailCliente = "", telefonoCliente = "") => {
+    // Validar datos básicos
     if (!cedula || !nombre || !direccion || !carrito?.length) {
       return { error: "Cédula, nombre, dirección y carrito son requeridos" };
     }
+
+    // Validar carrito
+    const validacionCarrito = validarCarrito(carrito);
+    if (!validacionCarrito.valido) {
+      return { error: validacionCarrito.errores.join("; ") };
+    }
+
+    // Validar datos del pedido
+    const datosValidar = {
+      cedula,
+      nombre,
+      direccion,
+      email: emailCliente,
+      telefono: telefonoCliente,
+      formaPago,
+      carrito,
+    };
+
+    const validacion = validarDatosPedido(datosValidar);
+    if (!validacion.valido) {
+      return { error: validacion.errores.join("; ") };
+    }
+
+    // Obtener cliente para tener acceso a su email
+    const clienteEncontrado = clientes.find((c) => c.cedula === cedula);
+    const emailDestino = emailCliente || clienteEncontrado?.correo;
+
+    const total = calcularTotal(carrito);
 
     const pedidoData = {
       cedula,
@@ -228,67 +259,90 @@ const { data, error } = await supabase
       direccion,
       forma_pago: formaPago,
       estado: "Pendiente",
-      total: carrito.reduce(
-        (sum, item) => sum + Number(item.precio) * Number(item.cantidad || 1),
-        0
-      ),
+      total,
     };
 
-    const { data: pedidoCreado, error: errorPedido } = await supabase
-      .from("pedidos")
-      .insert([pedidoData])
-      .select()
-      .single();
+    try {
+      const { data: pedidoCreado, error: errorPedido } = await supabase
+        .from("pedidos")
+        .insert([pedidoData])
+        .select()
+        .single();
 
-    if (errorPedido) {
-      console.error("Error creando pedido:", errorPedido);
-      return { error: errorPedido.message };
-    }
-
-    const detalles = carrito.map((item) => ({
-      pedido_id: pedidoCreado.id,
-      producto_id: item.id,
-      cantidad: item.cantidad || 1,
-      precio: item.precio,
-    }));
-
-    const { error: errorDetalle } = await supabase
-      .from("pedido_detalle")
-      .insert(detalles);
-
-    if (errorDetalle) {
-      console.error("Error creando detalle de pedido:", errorDetalle);
-      return { error: errorDetalle.message };
-    }
-
-    for (const item of carrito) {
-      const nuevoStock = Number(item.stock ?? 0) - Number(item.cantidad || 1);
-      const { error: errorStock } = await supabase
-        .from("productos")
-        .update({ stock: nuevoStock })
-        .eq("id", item.id);
-
-      if (errorStock) {
-        console.error("Error actualizando stock de producto:", errorStock);
-        return { error: errorStock.message };
+      if (errorPedido) {
+        console.error("Error creando pedido:", errorPedido);
+        return { error: errorPedido.message };
       }
+
+      const detalles = carrito.map((item) => ({
+        pedido_id: pedidoCreado.id,
+        producto_id: item.id,
+        cantidad: item.cantidad || 1,
+        precio: item.precio,
+      }));
+
+      const { error: errorDetalle } = await supabase
+        .from("pedido_detalle")
+        .insert(detalles);
+
+      if (errorDetalle) {
+        console.error("Error creando detalle de pedido:", errorDetalle);
+        return { error: errorDetalle.message };
+      }
+
+      // Actualizar stock
+      for (const item of carrito) {
+        const nuevoStock = Number(item.stock ?? 0) - Number(item.cantidad || 1);
+        const { error: errorStock } = await supabase
+          .from("productos")
+          .update({ stock: nuevoStock })
+          .eq("id", item.id);
+
+        if (errorStock) {
+          console.error("Error actualizando stock de producto:", errorStock);
+          return { error: errorStock.message };
+        }
+      }
+
+      setProductos((prev) =>
+        prev.map((producto) => {
+          const item = carrito.find((i) => i.id === producto.id);
+          if (!item) return producto;
+          return { ...producto, stock: Number(producto.stock || 0) - Number(item.cantidad || 1) };
+        })
+      );
+
+      const nuevoPedido = adaptarPedido({
+        ...pedidoCreado,
+        items: carrito,
+      });
+
+      setPedidos((prev) => [...prev, nuevoPedido]);
+
+      // Enviar correo de confirmación al cliente
+      if (emailDestino) {
+        try {
+          await enviarConfirmacionPedido({
+            pedidoId: pedidoCreado.id,
+            cliente: nombre,
+            email: emailDestino,
+            telefono: telefonoCliente || clienteEncontrado?.telefono,
+            items: carrito,
+            total,
+            formaPago,
+            direccion,
+          });
+        } catch (errorEmail) {
+          console.error("Error enviando correo de confirmación:", errorEmail);
+          // No retornar error aquí, el pedido ya fue creado
+        }
+      }
+
+      return { success: true, pedido: nuevoPedido };
+    } catch (error) {
+      console.error("Error en crearPedido:", error);
+      return { error: error.message || "Error al crear el pedido" };
     }
-
-    setProductos((prev) =>
-      prev.map((producto) => {
-        const item = carrito.find((i) => i.id === producto.id);
-        if (!item) return producto;
-        return { ...producto, stock: Number(producto.stock || 0) - Number(item.cantidad || 1) };
-      })
-    );
-
-    const nuevoPedido = adaptarPedido({
-      ...pedidoCreado,
-      items: carrito,
-    });
-
-    setPedidos((prev) => [...prev, nuevoPedido]);
-    return { success: true, pedido: nuevoPedido };
   };
 
   const crearVendedor = async (nombre, zona) => {

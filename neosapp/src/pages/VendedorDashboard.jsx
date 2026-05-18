@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useStore } from "../context/StoreContext";
+import { validarDatosPedido, validarCarrito } from "../utils/validaciones";
 import "../styles/vendedor-dashboard.css";
 
 export default function VendedorDashboard() {
@@ -15,6 +16,10 @@ export default function VendedorDashboard() {
   const [mostrarCrearPedido, setMostrarCrearPedido] = useState(false);
   const [itemsPedido, setItemsPedido] = useState([]);
   const [formaPagoPedido, setFormaPagoPedido] = useState("Crédito");
+  const [erroresValidacion, setErroresValidacion] = useState([]);
+  const [emailCliente, setEmailCliente] = useState("");
+  const [telefonoCliente, setTelefonoCliente] = useState("");
+  const [cargandoPedido, setCargandoPedido] = useState(false);
 
   // Obtener clientes del vendedor
   const clientesVendedor = clientes.filter(
@@ -28,6 +33,17 @@ export default function VendedorDashboard() {
   const pedidosCliente = clienteSeleccionado
     ? pedidos.filter((p) => p.clienteCedula === clienteSeleccionado.cedula)
     : [];
+
+  // Actualizar email y teléfono cuando se selecciona un cliente
+  const handleSeleccionarCliente = (clienteId) => {
+    setClienteSeleccionadoId(clienteId);
+    const cliente = clientesVendedor.find((c) => c.id === clienteId);
+    if (cliente) {
+      setEmailCliente(cliente.correo || "");
+      setTelefonoCliente(cliente.telefono || "");
+    }
+    setErroresValidacion([]);
+  };
 
   const handleAgregarProducto = (producto) => {
     const itemExistente = itemsPedido.find(item => item.id === producto.id);
@@ -47,10 +63,12 @@ export default function VendedorDashboard() {
           id: producto.id,
           nombre: producto.nombre,
           precio: producto.precio,
+          stock: producto.stock,
           cantidad: 1
         }
       ]);
     }
+    setErroresValidacion([]);
   };
 
   const handleEliminarProducto = (productoId) => {
@@ -69,28 +87,68 @@ export default function VendedorDashboard() {
           : item
       )
     );
+    setErroresValidacion([]);
   };
 
-  const handleCrearPedido = () => {
+  const handleCrearPedido = async () => {
+    setErroresValidacion([]);
+
     if (!clienteSeleccionado || itemsPedido.length === 0) {
-      alert("Por favor selecciona un cliente y agrega productos");
+      setErroresValidacion(["Por favor selecciona un cliente y agrega productos"]);
       return;
     }
 
-    const resultado = crearPedido(
-      clienteSeleccionado.cedula,
-      clienteSeleccionado.nombre,
-      clienteSeleccionado.direccion,
-      itemsPedido,
-      formaPagoPedido
-    );
+    // Validar datos del pedido
+    const datosValidar = {
+      cedula: clienteSeleccionado.cedula,
+      nombre: clienteSeleccionado.nombre,
+      direccion: clienteSeleccionado.direccion,
+      email: emailCliente,
+      telefono: telefonoCliente,
+      formaPago: formaPagoPedido,
+      carrito: itemsPedido,
+    };
 
-    if (resultado.success) {
-      alert("Pedido creado correctamente");
-      setItemsPedido([]);
-      setMostrarCrearPedido(false);
-    } else {
-      alert("Error al crear el pedido");
+    const validacion = validarDatosPedido(datosValidar);
+    if (!validacion.valido) {
+      setErroresValidacion(validacion.errores);
+      return;
+    }
+
+    // Validar carrito específicamente
+    const validacionCarrito = validarCarrito(itemsPedido);
+    if (!validacionCarrito.valido) {
+      setErroresValidacion(validacionCarrito.errores);
+      return;
+    }
+
+    setCargandoPedido(true);
+
+    try {
+      const resultado = await crearPedido(
+        clienteSeleccionado.cedula,
+        clienteSeleccionado.nombre,
+        clienteSeleccionado.direccion,
+        itemsPedido,
+        formaPagoPedido,
+        emailCliente,
+        telefonoCliente
+      );
+
+      if (resultado.success) {
+        alert("✓ Pedido creado correctamente y confirmación enviada al cliente");
+        setItemsPedido([]);
+        setMostrarCrearPedido(false);
+        setErroresValidacion([]);
+        setEmailCliente("");
+        setTelefonoCliente("");
+      } else {
+        setErroresValidacion([resultado.error || "Error al crear el pedido"]);
+      }
+    } catch (error) {
+      setErroresValidacion([error.message || "Error inesperado"]);
+    } finally {
+      setCargandoPedido(false);
     }
   };
 
@@ -134,7 +192,7 @@ export default function VendedorDashboard() {
                 <div
                   key={cliente.id}
                   className={`cliente-item ${clienteSeleccionadoId === cliente.id ? "activo" : ""}`}
-                  onClick={() => setClienteSeleccionadoId(cliente.id)}
+                  onClick={() => handleSeleccionarCliente(cliente.id)}
                 >
                   <p className="cliente-nombre">{cliente.nombre}</p>
                   <p className="cliente-cedula">{cliente.cedula}</p>
@@ -193,6 +251,47 @@ export default function VendedorDashboard() {
             {mostrarCrearPedido && (
               <div className="crear-pedido-section">
                 <h4>Crear Nuevo Pedido</h4>
+
+                {/* Mostrar errores de validación */}
+                {erroresValidacion.length > 0 && (
+                  <div className="errores-validacion">
+                    <h5>⚠️ Errores de Validación:</h5>
+                    <ul>
+                      {erroresValidacion.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Datos de contacto del cliente */}
+                <div className="datos-contacto">
+                  <h5>Datos de Contacto</h5>
+                  <div className="contacto-fields">
+                    <div className="form-group">
+                      <label>Email del Cliente:</label>
+                      <input
+                        type="email"
+                        value={emailCliente}
+                        onChange={(e) => setEmailCliente(e.target.value)}
+                        placeholder="ejemplo@correo.com"
+                        className="input-email"
+                      />
+                      <small>Se usará para enviar la confirmación del pedido</small>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Teléfono del Cliente:</label>
+                      <input
+                        type="tel"
+                        value={telefonoCliente}
+                        onChange={(e) => setTelefonoCliente(e.target.value)}
+                        placeholder="Teléfono (opcional)"
+                        className="input-telefono"
+                      />
+                    </div>
+                  </div>
+                </div>
                 
                 <div className="productos-disponibles">
                   <h5>Productos Disponibles</h5>
@@ -275,14 +374,16 @@ export default function VendedorDashboard() {
                         <option value="Efectivo">Efectivo</option>
                         <option value="Crédito">Crédito</option>
                         <option value="Abono">Abono</option>
+                        <option value="Tarjeta">Tarjeta</option>
                       </select>
                     </div>
 
                     <button
                       className="btn-confirmar-pedido"
                       onClick={handleCrearPedido}
+                      disabled={cargandoPedido}
                     >
-                      Confirmar Pedido
+                      {cargandoPedido ? "Procesando..." : "✓ Confirmar Pedido"}
                     </button>
                   </div>
                 )}

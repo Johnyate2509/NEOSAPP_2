@@ -65,8 +65,9 @@ export function AuthProvider({ children }) {
     }
 
     // Insertar en la tabla correspondiente según el rol
-    if (role === 'cliente') {
+    if (role === 'cliente' && data.user) {
       const clienteData = {
+        usuario_id: data.user.id,
         nombre: metadata.nombre || '',
         cedula: metadata.cedula || '',
         direccion: metadata.direccion || '',
@@ -79,7 +80,7 @@ export function AuthProvider({ children }) {
       if (insertError) {
         console.error('Error insertando cliente:', insertError);
         // Opcional: eliminar el usuario de auth si falla la inserción
-        return { success: false, error: 'Error al crear el perfil de cliente' };
+        return { success: false, error: 'Error al crear el perfil de cliente: ' + insertError.message };
       }
     }
     // Para otros roles, agregar lógica similar si es necesario
