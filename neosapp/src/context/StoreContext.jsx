@@ -26,7 +26,11 @@ const adaptarProducto = (p) => ({
   categoria_id: p.categoria_id,
   categoria: p.categorias?.nombre || p.categoria || "",
   categorias: p.categorias ?? null,
-  imagenes: [p.imagen_url || p.imagenes?.[0] || DEFAULT_IMAGE],
+  imagenes: Array.isArray(p.imagenes) && p.imagenes.length > 0
+    ? p.imagenes
+    : p.imagen_url
+    ? [p.imagen_url]
+    : [DEFAULT_IMAGE],
 });
 
   const adaptarPedido = (p, items = []) => ({
@@ -294,18 +298,22 @@ if (!categoriaEncontrada) {
   return { error: "Categoría no encontrada" };
 }
 
-const { data, error } = await supabase
-  .from("productos")
-  .insert([
-    {
+const productoInsert = {
       nombre,
       precio: Number(precio),
       stock: Number(stock),
       descripcion,
       categoria_id: categoriaEncontrada.id,
-      imagen_url: imagenes[0] || null,
-    },
-  ])
+    };
+
+    if (imagenes.length > 0) {
+      productoInsert.imagenes = imagenes;
+      productoInsert.imagen_url = imagenes[0];
+    }
+
+    const { data, error } = await supabase
+      .from("productos")
+      .insert([productoInsert])
   .select("*")
   .single();
 
@@ -353,8 +361,11 @@ const { data, error } = await supabase
     if (datos.precio != null) datosActualizacion.precio = Number(datos.precio);
     if (datos.stock != null) datosActualizacion.stock = Number(datos.stock);
     if (datos.descripcion != null) datosActualizacion.descripcion = datos.descripcion;
-    if (datos.imagenes != null && datos.imagenes.length > 0) {
-      datosActualizacion.imagen_url = datos.imagenes[0];
+    if (datos.imagenes != null) {
+      datosActualizacion.imagenes = datos.imagenes;
+      if (datos.imagenes.length > 0) {
+        datosActualizacion.imagen_url = datos.imagenes[0];
+      }
     }
 
     const { data, error } = await supabase
