@@ -63,37 +63,16 @@ const cargarProductos = async () => {
 };
 
   const cargarClientes = async () => {
-    const tableNames = ["clientes", "cliente", "Clientes"];
-
-    const fetchClientes = async (table) => {
-      const { data, error } = await supabase.from(table).select("*");
-      if (error) {
-        console.error(`Error cargando clientes desde ${table}:`, error);
-        return null;
-      }
-      return data || [];
-    };
-
-    let clientesData = [];
-    let tableUsada = "clientes";
-
-    for (const table of tableNames) {
-      const data = await fetchClientes(table);
-      if (data === null) continue;
-      if (data.length > 0) {
-        clientesData = data;
-        tableUsada = table;
-        break;
-      }
-      if (table === "clientes") {
-        clientesData = data;
-      }
+    const { data, error } = await supabase.from("clientes").select("*");
+    if (error) {
+      console.error("Error cargando clientes:", error);
+      return;
     }
 
-    console.log(`Clientes cargados desde Supabase (${tableUsada}):`, clientesData);
+    console.log("Clientes cargados desde Supabase (clientes):", data);
 
     setClientes(
-      clientesData.map((cliente) => {
+      (data || []).map((cliente) => {
         const clienteId =
           cliente.id ??
           cliente.cliente_id ??
