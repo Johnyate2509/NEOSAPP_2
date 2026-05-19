@@ -51,10 +51,21 @@ export default function Pedidos() {
     (p) => !pedidoTemp.items?.some((item) => item.id === p.id)
   );
 
-  const pedidosFiltrados = pedidos.filter(p =>
-    p.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.id.toString().includes(searchTerm)
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const pedidosFiltrados = pedidos.filter((p) => {
+    const cliente = (p?.cliente ?? "").toLowerCase();
+    const id = p?.id != null ? p.id.toString() : "";
+
+    if (!normalizedSearchTerm) {
+      return true;
+    }
+
+    return (
+      cliente.includes(normalizedSearchTerm) ||
+      id.includes(normalizedSearchTerm)
+    );
+  });
 
   return (
     <div className="pedidos-page">
@@ -97,7 +108,7 @@ export default function Pedidos() {
                 <td data-label="Fecha">{p.fecha}</td>
                 <td data-label="Valor">${p.total.toLocaleString()}</td>
                 <td data-label="Estado">
-                  <span className={`estado-badge estado-${p.estado.toLowerCase().replace(' ', '-')}`}>
+                  <span className={`estado-badge estado-${(p.estado ?? "").toLowerCase().replace(' ', '-')}`}>
                     {p.estado}
                   </span>
                 </td>
@@ -146,7 +157,14 @@ export default function Pedidos() {
                   <p><strong>Cliente:</strong> {modalPedido.cliente}</p>
                   <p><strong>Dirección:</strong> {modalPedido.direccion}</p>
                   <p><strong>Fecha:</strong> {modalPedido.fecha}</p>
-                  <p><strong>Forma de pago:</strong> <span className={`forma-pago ${modalPedido.formaPago.toLowerCase()}`}>{modalPedido.formaPago}</span></p>
+                  <p>
+                    <strong>Forma de pago:</strong>{" "}
+                    <span
+                      className={`forma-pago ${modalPedido.formaPago?.toLowerCase() ?? ""}`}
+                    >
+                      {modalPedido.formaPago}
+                    </span>
+                  </p>
                 </div>
 
                 {/* Items con controles de edición si está expandido */}
