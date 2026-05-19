@@ -99,18 +99,29 @@ const cargarProductos = async () => {
     }
 
     const detallesPorPedido = detalleData.reduce((acc, detalle) => {
-      const producto = productos.find((prod) => prod.id === detalle.producto_id);
+      const pedidoId =
+        detalle.pedido_id ?? detalle.Pedido_id ?? detalle.pedidoId ?? detalle.PedidoId;
+      const productoId =
+        detalle.producto_id ??
+        detalle.Producto_id ??
+        detalle.productoId ??
+        detalle.ProductoId;
+
+      const producto = productos.find(
+        (prod) => String(prod.id) === String(productoId)
+      );
+
       const item = {
-        id: detalle.producto_id,
+        id: productoId,
         nombre:
           detalle.nombre ||
           producto?.nombre ||
-          `Producto #${detalle.producto_id}`,
-        precio: Number(detalle.precio ?? producto?.precio ?? 0),
-        cantidad: Number(detalle.cantidad ?? 1),
+          `Producto #${productoId}`,
+        precio: Number(detalle.precio ?? detalle.Precio ?? producto?.precio ?? 0),
+        cantidad: Number(detalle.cantidad ?? detalle.Cantidad ?? 1),
       };
 
-      acc[detalle.pedido_id] = [...(acc[detalle.pedido_id] || []), item];
+      acc[pedidoId] = [...(acc[pedidoId] || []), item];
       return acc;
     }, {});
 
