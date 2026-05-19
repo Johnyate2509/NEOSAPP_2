@@ -8,7 +8,6 @@ export default function Pedidos() {
     repartidores, 
     productos,
     cambiarEstadoPedido, 
-    eliminarPedido, 
     asignarRepartidor,
     agregarItemPedido,
     eliminarItemPedido,
@@ -251,10 +250,17 @@ export default function Pedidos() {
                     {modalPedido.items?.length > 0 ? (
                       modalPedido.items.map((item, index) => (
                         <div key={index} className="pedido-item pedido-item-detalle">
-                          <button
-                            type="button"
+                          <div
+                            role="button"
+                            tabIndex={0}
                             className="producto-miniatura"
                             onClick={() => item.imagen && setImagenModal(item.imagen)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                item.imagen && setImagenModal(item.imagen);
+                              }
+                            }}
                             title={item.imagen ? "Ver imagen ampliada" : "Sin imagen disponible"}
                           >
                             {item.imagen ? (
@@ -262,7 +268,7 @@ export default function Pedidos() {
                             ) : (
                               <div className="imagen-placeholder">?</div>
                             )}
-                          </button>
+                          </div>
 
                           <div className="producto-detalle-texto">
                             <span className="producto-nombre">{item.nombre}</span>

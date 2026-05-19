@@ -147,6 +147,9 @@
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .producto-miniatura img {
@@ -197,23 +200,41 @@
   justify-content: center;
   z-index: 1100;
   padding: 16px;
+  overflow-y: auto;
 }
 
 .image-preview-content {
   position: relative;
-  max-width: 95%;
-  max-height: 95%;
-  width: min(560px, 100%);
+  max-width: 95vw;
+  max-height: 95vh;
+  width: min(740px, 100%);
   background: white;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  transition: none;
 }
 
 .image-preview-content img {
   width: 100%;
   height: auto;
+  max-height: calc(95vh - 40px);
   display: block;
+  object-fit: contain;
+}
+
+.image-preview-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: none;
 }
 
 .image-preview-close {
