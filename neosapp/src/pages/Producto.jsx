@@ -21,7 +21,7 @@ const CATEGORIAS_POR_DEFECTO = [
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
-  const { productos, categorias, setProductos, crearProducto, actualizarProducto, crearPedido, clientes } = useStore();
+  const { productos, categorias, setProductos, crearProducto, actualizarProducto, crearPedido, crearCliente, clientes } = useStore();
   const { esAdmin, esVendedor, obtenerDatosUsuario } = useAuth();
   const vendedorData = obtenerDatosUsuario();
 
@@ -407,13 +407,43 @@ const obtenerProductosFiltrados = (categoria) => {
     });
   };
 
-  const finalizarPedido = () => {
+  const finalizarPedido = async () => {
     if (!datosCliente.cedula || !datosCliente.nombre || !datosCliente.direccion || !datosCliente.correoElectronico || !datosCliente.numeroCelular || !datosCliente.password_hash || carrito.length === 0) {
-      alert("Por favor completa todos los datos (Cédula, Nombre, Dirección) y agrega productos");
+      alert("Por favor completa todos los datos (Cédula, Nombre, Dirección, correo, teléfono y contraseña) y agrega productos");
       return;
     }
 
-    crearPedido(datosCliente.cedula, datosCliente.nombre, datosCliente.direccion, carrito,  datosCliente.formaPago);
+    // 1) Crear o asegurar cliente en la BD (seguirá la lógica de crearCliente con Auth si hay email)
+    const resultadoCliente = await crearCliente(
+      datosCliente.nombre,
+      datosCliente.cedula,
+      datosCliente.direccion,
+      datosCliente.numeroCelular,
+      datosCliente.correoElectronico,
+      null,
+      datosCliente.password_hash
+    );
+
+    if (resultadoCliente?.error) {
+      alert("Error creando cliente: " + resultadoCliente.error);
+      return;
+    }
+
+    // 2) Crear pedido, pasando email y teléfono para envío de confirmación
+    const resultadoPedido = await crearPedido(
+      datosCliente.cedula,
+      datosCliente.nombre,
+      datosCliente.direccion,
+      carrito,
+      datosCliente.formaPago,
+      datosCliente.correoElectronico,
+      datosCliente.numeroCelular
+    );
+
+    if (resultadoPedido?.error) {
+      alert("Error creando pedido: " + resultadoPedido.error);
+      return;
+    }
 
     setCarrito([]);
     setDatosCliente({
@@ -422,6 +452,7 @@ const obtenerProductosFiltrados = (categoria) => {
       direccion: "",
       correoElectronico: "",
       numeroCelular: "",
+      password_hash: "",
       formaPago: FORMAS_PAGO[0],
     });
     setMostrarModalPedido(false);
