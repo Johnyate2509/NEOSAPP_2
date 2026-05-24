@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { supabase } from "./supabaseClient";
 import { validarDatosPedido, validarCarrito, calcularTotal } from "../utils/validaciones";
 import { enviarConfirmacionPedido, enviarNotificacionVendedor } from "../services/emailService";
@@ -12,6 +12,7 @@ export function StoreProvider({ children }) {
   const [repartidores, setRepartidores] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [usuariosVendedores, setUsuariosVendedores] = useState([]);
+  const [tablaVendedoresExiste, setTablaVendedoresExiste] = useState(true);
   const [categorias, setCategorias] = useState([]);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
 
@@ -125,6 +126,15 @@ const cargarProductos = async () => {
           transacciones: cliente.transacciones ?? cliente.transactions ?? [],
           vendedor_id:
             cliente.vendedor_id ??
+            cliente.vendedor_usuario_id ??
+            cliente["vendedor id"] ??
+            cliente.vendedorId ??
+            cliente.Vendedor_id ??
+            cliente.vendedor ??
+            null,
+          vendedor_usuario_id:
+            cliente.vendedor_usuario_id ??
+            cliente.vendedor_id ??
             cliente["vendedor id"] ??
             cliente.vendedorId ??
             cliente.Vendedor_id ??
@@ -212,20 +222,45 @@ const cargarProductos = async () => {
 
   const cargarRepartidores = async () => {
     const { data, error } = await supabase.from("repartidores").select("*");
+
     if (error) {
       console.error("Error cargando repartidores:", error);
       return;
     }
+
     setRepartidores(data || []);
   };
 
   const cargarVendedores = async () => {
-    const { data, error } = await supabase.from("vendedores").select("*");
-    if (error) {
-      console.error("Error cargando vendedores:", error);
-      return;
+    try {
+      const { data, error } = await supabase.from("vendedores").select("*");
+
+      if (error) {
+        if (
+          error.code === "42P01" ||
+          error.message?.toLowerCase().includes("relation \"vendedores\" does not exist")
+        ) {
+          console.warn("Tabla 'vendedores' no existe: se usará solo usuarios con rol vendedor.");
+          setTablaVendedoresExiste(false);
+          setVendedores([]);
+          return;
+        }
+        console.error("Error cargando vendedores:", error);
+        return;
+      }
+      setVendedores(data || []);
+      setTablaVendedoresExiste(true);
+    } catch (err) {
+      // Algunos errores de Supabase relacionados con la caché del esquema pueden lanzar excepciones
+      if (String(err?.message || "").toLowerCase().includes("relation \"vendedores\" does not exist") ||
+          String(err?.message || "").toLowerCase().includes("could not find the table 'public.vendedores'")) {
+        console.warn("Excepción: tabla 'vendedores' no encontrada en el cache del esquema. Usando usuarios con rol 'vendedor'.");
+        setTablaVendedoresExiste(false);
+        setVendedores([]);
+        return;
+      }
+      console.error("Excepción cargando vendedores:", err);
     }
-    setVendedores(data || []);
   };
 
   const cargarUsuariosVendedores = async () => {
@@ -240,6 +275,23 @@ const cargarProductos = async () => {
     }
     setUsuariosVendedores(data || []);
   };
+
+  const vendedoresConUsuarios = useMemo(() => {
+    return usuariosVendedores
+      .filter((usuario) => usuario.rol === "vendedor")
+      .map((usuario) => {
+        const registro = vendedores.find((v) => String(v.usuario_id) === String(usuario.id));
+        return {
+          id: usuario.id,
+          usuario_id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          zona: registro?.zona || usuario.zona || "",
+          estado: registro?.estado || "Activo",
+          registroVendedor: registro || null,
+        };
+      });
+  }, [usuariosVendedores, vendedores]);
 
   const cargarCategorias = async () => {
     setCargandoCategorias(true);
@@ -593,6 +645,7 @@ const crearVendedor = async (nombre, zona, email, password) => {
             nombre,
             email,
             rol: "vendedor",
+            zona,
           },
         ])
         .select()
@@ -618,26 +671,54 @@ const crearVendedor = async (nombre, zona, email, password) => {
     }
 
     // 4. Insertar en tabla vendedores (conectado por usuario_id)
-    const { data: vendedorData, error: errorVendedor } =
-      await supabase
-        .from("vendedores")
-        .insert([
-          {
-            zona,
-            estado: "Activo",
-            usuario_id: userId, // ← ESTA ES LA CLAVE
-          },
-        ])
-        .select()
-        .single();
+    let vendedorData = null;
+    if (tablaVendedoresExiste) {
+      const { data: vendedorInsertado, error: errorVendedor } =
+        await supabase
+          .from("vendedores")
+          .insert([
+            {
+              zona,
+              estado: "Activo",
+              usuario_id: userId,
+            },
+          ])
+          .select()
+          .single();
 
-    if (errorVendedor) {
-      console.error("Error creando vendedor:", errorVendedor);
-      return { error: errorVendedor.message };
+      if (errorVendedor) {
+        if (
+          errorVendedor.code === "42P01" ||
+          errorVendedor.message?.toLowerCase().includes("relation \"vendedores\" does not exist")
+        ) {
+          console.warn("Tabla 'vendedores' no existe: el vendedor se creó solo en usuarios.");
+          setTablaVendedoresExiste(false);
+        } else {
+          console.error("Error creando vendedor:", errorVendedor);
+          return { error: errorVendedor.message };
+        }
+      } else {
+        vendedorData = vendedorInsertado;
+        setVendedores((prev) => [...prev, vendedorData]);
+      }
     }
 
-    // 5. Actualizar estado local
-    setVendedores((prev) => [...prev, vendedorData]);
+    if (!vendedorData) {
+      vendedorData = {
+        id: userId,
+        usuario_id: userId,
+        nombre,
+        email,
+        zona,
+        estado: "Activo",
+      };
+    }
+
+    // 5. Actualizar estado local de usuarios vendedores
+    setUsuariosVendedores((prev) => [
+      ...prev,
+      { id: userId, nombre, email, zona, rol: "vendedor" },
+    ]);
 
     if (previousSession) {
       const { error: restoreError } = await supabase.auth.setSession({
@@ -745,19 +826,21 @@ const crearCliente = async (
         }
 
         // Insertar en tabla clientes vinculado al usuario
+        const clienteInsertPayload = {
+          usuario_id: userId,
+          nombre,
+          cedula,
+          direccion,
+          telefono,
+          correo,
+        };
+        if (vendedor_id) {
+          clienteInsertPayload.vendedor_usuario_id = vendedor_id;
+        }
+
         const { data: clienteData, error: errorCliente } = await supabase
           .from("clientes")
-          .insert([
-            {
-              usuario_id: userId,
-              nombre,
-              cedula,
-              direccion,
-              telefono,
-              correo,
-              vendedor_id,
-            },
-          ])
+          .insert([clienteInsertPayload])
           .select()
           .single();
 
@@ -834,9 +917,20 @@ const crearCliente = async (
         }
       }
 
-      const { data, error } = await supabase
-        .from("clientes")
-        .insert([{ nombre, cedula, direccion, telefono, correo, vendedor_id }])
+const datosCliente = {
+      nombre,
+      cedula,
+      direccion,
+      telefono,
+      correo,
+    };
+    if (vendedor_id) {
+      datosCliente.vendedor_usuario_id = vendedor_id;
+    }
+
+    const { data, error } = await supabase
+      .from("clientes")
+      .insert([datosCliente])
         .select()
         .single();
 
@@ -847,6 +941,8 @@ const crearCliente = async (
 
       const clienteCreado = {
         ...data,
+        vendedor_id: data.vendedor_id ?? data.vendedor_usuario_id ?? null,
+        vendedor_usuario_id: data.vendedor_usuario_id ?? data.vendedor_id ?? null,
         saldo: data.saldo ?? 0,
         transacciones: data.transacciones ?? [],
       };
@@ -861,7 +957,9 @@ const crearCliente = async (
   };
 
   const obtenerClientesPorVendedor = (vendedorId) =>
-    clientes.filter((cliente) => cliente.vendedor_id === vendedorId);
+    clientes.filter(
+      (cliente) => String(cliente.vendedor_id) === String(vendedorId)
+    );
 
   const calcularVentasPorVendedor = (vendedorId) => {
     const clientesVendedor = obtenerClientesPorVendedor(vendedorId);
@@ -965,11 +1063,11 @@ const crearCliente = async (
   };
 
   const actualizarClienteVendedor = async (clienteId, vendedorId) => {
-    const vendedorIdNormalized = vendedorId ? parseInt(vendedorId, 10) : null;
+    const vendedorIdNormalized = vendedorId || null;
 
     const { error } = await supabase
       .from("clientes")
-      .update({ vendedor_id: vendedorIdNormalized })
+      .update({ vendedor_usuario_id: vendedorIdNormalized })
       .eq("id", clienteId);
 
     if (error) {
@@ -979,10 +1077,94 @@ const crearCliente = async (
 
     setClientes((prev) =>
       prev.map((c) =>
-        c.id === clienteId ? { ...c, vendedor_id: vendedorIdNormalized } : c
+        c.id === clienteId
+          ? {
+              ...c,
+              vendedor_id: vendedorIdNormalized,
+              vendedor_usuario_id: vendedorIdNormalized,
+            }
+          : c
       )
     );
     return true;
+  };
+
+  const eliminarVendedor = async (vendedorUsuarioId) => {
+    if (!vendedorUsuarioId) {
+      return { error: "ID de vendedor no proporcionado" };
+    }
+
+    try {
+      // Verificar que el usuario exista y tenga rol 'vendedor'
+      const { data: usuario, error: errorUsuarioSelect } = await supabase
+        .from("usuarios")
+        .select("id, rol")
+        .eq("id", vendedorUsuarioId)
+        .maybeSingle();
+
+      if (errorUsuarioSelect) {
+        console.error("Error verificando usuario vendedor:", errorUsuarioSelect);
+        return { error: errorUsuarioSelect.message };
+      }
+
+      if (!usuario || String(usuario.rol) !== "vendedor") {
+        return { error: "El usuario no existe o no tiene rol 'vendedor'" };
+      }
+
+      // Desasignar clientes asociados al vendedor
+      const { error: errorClientes } = await supabase
+        .from("clientes")
+        .update({ vendedor_usuario_id: null })
+        .eq("vendedor_usuario_id", vendedorUsuarioId);
+
+      if (errorClientes) {
+        console.error("Error desasignando clientes del vendedor:", errorClientes);
+        return { error: errorClientes.message };
+      }
+
+      setClientes((prev) =>
+        prev.map((cliente) =>
+          String(cliente.vendedor_usuario_id) === String(vendedorUsuarioId)
+            ? {
+                ...cliente,
+                vendedor_id: null,
+                vendedor_usuario_id: null,
+              }
+            : cliente
+        )
+      );
+
+
+      // No dependemos de la tabla `vendedores` (puede no existir).
+      // La fuente de verdad es `usuarios` con `rol = 'vendedor'`.
+      // Si la tabla `vendedores` existe, su limpieza puede hacerse aparte/manualmente.
+
+      const { error: errorEliminarUsuario } = await supabase
+        .from("usuarios")
+        .delete()
+        .eq("id", vendedorUsuarioId)
+        .eq("rol", "vendedor");
+
+      if (errorEliminarUsuario) {
+        console.error("Error eliminando usuario vendedor:", errorEliminarUsuario);
+        return { error: errorEliminarUsuario.message };
+      }
+
+      setUsuariosVendedores((prev) =>
+        prev.filter((usuario) => String(usuario.id) !== String(vendedorUsuarioId))
+      );
+
+      try {
+        await supabase.auth.admin.deleteUser(vendedorUsuarioId);
+      } catch (e) {
+        console.error("Error eliminando usuario en Auth:", e);
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error("Error eliminando vendedor:", err);
+      return { error: err.message || "Error al eliminar vendedor" };
+    }
   };
 
   const cambiarEstadoPedido = async (pedidoId, estado) => {
@@ -1116,7 +1298,10 @@ return (
       eliminarItemPedido,
       actualizarCantidadItemPedido,
       actualizarProducto,
+      eliminarVendedor,
       cargandoCategorias,
+      vendedoresConUsuarios,
+      tablaVendedoresExiste,
     }}
   >
     {children}

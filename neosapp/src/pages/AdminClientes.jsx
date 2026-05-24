@@ -4,7 +4,7 @@ import "../styles/admin-clientes.css";
 
 
 export default function AdminClientes() {
-  const { clientes, crearCliente, vendedores, usuariosVendedores, actualizarClienteVendedor } = useStore();
+  const { clientes, crearCliente, vendedoresConUsuarios, actualizarClienteVendedor } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nuevoCliente, setNuevoCliente] = useState({
@@ -29,7 +29,7 @@ export default function AdminClientes() {
       nuevoCliente.direccion,
       nuevoCliente.telefono,
       nuevoCliente.correo,
-      nuevoCliente.vendedor_id ? parseInt(nuevoCliente.vendedor_id) : null
+      nuevoCliente.vendedor_id || null
     );
 
     if (resultado.error) {
@@ -51,16 +51,6 @@ export default function AdminClientes() {
       setMensaje("");
     }, 2000);
   };
-
-  const vendedoresConUsuarios = vendedores.map((vendedor) => {
-    const usuario = usuariosVendedores.find((u) => u.id === vendedor.usuario_id);
-    return {
-      ...vendedor,
-      nombre: usuario?.nombre || vendedor.nombre,
-      email: usuario?.email || "",
-      zona: vendedor.zona || usuario?.zona || "",
-    };
-  });
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const clientesFiltrados = normalizedSearch

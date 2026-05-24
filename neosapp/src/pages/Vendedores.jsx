@@ -4,14 +4,15 @@ import "../styles/vendedores.css";
 
 export default function Vendedores() {
   const {
-    vendedores,
+    vendedoresConUsuarios,
     obtenerClientesPorVendedor,
     calcularVentasPorVendedor,
     crearVendedor,
+    eliminarVendedor,
   } = useStore();
   const [vendedorSeleccionado, setVendedorSeleccionado] = useState(null);
   const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevaZona, setNuevaZona] = useState("");
+  const [nuevazona, setNuevazona] = useState("");
   const [nuevoEmail, setNuevoEmail] = useState("");
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -20,11 +21,30 @@ export default function Vendedores() {
     setVendedorSeleccionado(vendedorSeleccionado === vendedorId ? null : vendedorId);
   };
 
+  const handleEliminarVendedor = async (vendedorId) => {
+    if (!vendedorId) return;
+    const confirmar = window.confirm(
+      "¿Estás seguro de que deseas eliminar este vendedor? Esta acción desasignará sus clientes."
+    );
+    if (!confirmar) return;
+
+    const resultado = await eliminarVendedor(vendedorId);
+    if (resultado.error) {
+      setMensaje(`❌ ${resultado.error}`);
+      return;
+    }
+    setMensaje("✅ Vendedor eliminado correctamente");
+    setVendedorSeleccionado(null);
+    setTimeout(() => setMensaje(""), 3000);
+  };
+
   return (
     <div className="vendedores-page">
       <div className="vendedores-header">
         <h2>Gestión de Vendedores</h2>
-        <p className="total-vendedores">Total de vendedores: {vendedores.length}</p>
+        <p className="total-vendedores">
+          Total de vendedores: {vendedoresConUsuarios.length}
+        </p>
       </div>
 
       <div className="vendedores-formulario">
@@ -39,9 +59,9 @@ export default function Vendedores() {
           />
           <input
             type="text"
-            placeholder="Zona"
-            value={nuevaZona}
-            onChange={(e) => setNuevaZona(e.target.value)}
+            placeholder="zona"
+            value={nuevazona}
+            onChange={(e) => setNuevazona(e.target.value)}
           />
           <input
             type="email"
@@ -60,7 +80,7 @@ export default function Vendedores() {
             onClick={async () => {
               const resultado = await crearVendedor(
                 nuevoNombre.trim(),
-                nuevaZona.trim(),
+                nuevazona.trim(),
                 nuevoEmail.trim(),
                 nuevaPassword
               );
@@ -70,7 +90,7 @@ export default function Vendedores() {
               }
               setMensaje(`✅ Vendedor ${resultado.vendedor.nombre} creado`);
               setNuevoNombre("");
-              setNuevaZona("");
+              setNuevazona("");
               setNuevoEmail("");
               setNuevaPassword("");
               setTimeout(() => setMensaje(""), 3000);
@@ -83,83 +103,95 @@ export default function Vendedores() {
       </div>
 
       <div className="vendedores-grid">
-        {vendedores.map((vendedor) => {
-          const clientesVendedor = obtenerClientesPorVendedor(vendedor.id);
-          const totalVentas = calcularVentasPorVendedor(vendedor.id);
-          const isSeleccionado = vendedorSeleccionado === vendedor.id;
+        {vendedoresConUsuarios.map((vendedor) => {
+          const clienteVendedorId = vendedor.id;
+          const clientesVendedor = obtenerClientesPorVendedor(clienteVendedorId);
+          const totalVentas = calcularVentasPorVendedor(clienteVendedorId);
+          const isSeleccionado = vendedorSeleccionado === vendedor.usuario_id;
 
           return (
-            <div key={vendedor.id} className="vendedor-card">
-              <div
-                className="vendedor-header"
-                onClick={() => handleSeleccionarVendedor(vendedor.id)}
-              >
-                <div className="vendedor-info">
-                  <h3>{vendedor.nombre}</h3>
-                  <div className="zona-badge">{vendedor.zona}</div>
-                </div>
-                <div className="vendedor-stats">
-                  <div className="stat">
-                    <span className="stat-label">Clientes</span>
-                    <span className="stat-value">{clientesVendedor.length}</span>
+              <div key={vendedor.usuario_id} className="vendedor-card">
+                <div
+                  className="vendedor-header"
+                  onClick={() => handleSeleccionarVendedor(vendedor.usuario_id)}
+                >
+                  <div className="vendedor-info">
+                    <h3>{vendedor.nombre}</h3>
+                    <div className="zona-badge">{vendedor.zona || "Sin zona"}</div>
                   </div>
-                  <div className="stat">
-                    <span className="stat-label">Ventas</span>
-                    <span className="stat-value">
-                      ${totalVentas.toLocaleString("es-CO")}
-                    </span>
+                  <div className="vendedor-stats">
+                    <div className="stat">
+                      <span className="stat-label">Clientes</span>
+                      <span className="stat-value">{clientesVendedor.length}</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-label">Ventas</span>
+                      <span className="stat-value">
+                        ${totalVentas.toLocaleString("es-CO")}
+                      </span>
+                    </div>
                   </div>
+                  <div className="vendedor-actions">
+                    <button
+                      className="btn-accion-vendedor btn-eliminar-vendedor"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEliminarVendedor(vendedor.usuario_id);
+                      }}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                  <span className={`expand-icon ${isSeleccionado ? "expanded" : ""}`}>
+                    ▼
+                  </span>
                 </div>
-                <span className={`expand-icon ${isSeleccionado ? "expanded" : ""}`}>
-                  ▼
-                </span>
-              </div>
 
-              {isSeleccionado && (
-                <div className="vendedor-clientes">
-                  {clientesVendedor.length > 0 ? (
-                    <div className="clientes-list">
-                      <h4>Clientes Asignados</h4>
-                      <div className="clientes-table">
-                        <div className="table-header">
-                          <div className="col-nombre">Nombre</div>
-                          <div className="col-cedula">Cédula</div>
-                          <div className="col-correo">Correo</div>
-                          <div className="col-ventas">Ventas</div>
+                {isSeleccionado && (
+                  <div className="vendedor-clientes">
+                    {clientesVendedor.length > 0 ? (
+                      <div className="clientes-list">
+                        <h4>Clientes Asignados</h4>
+                        <div className="clientes-table">
+                          <div className="table-header">
+                            <div className="col-nombre">Nombre</div>
+                            <div className="col-cedula">Cédula</div>
+                            <div className="col-correo">Correo</div>
+                            <div className="col-ventas">Ventas</div>
+                          </div>
+                          {clientesVendedor.map((cliente) => {
+                            const ventasCliente = cliente.transacciones
+                              .filter((t) => t.tipo === "pedido")
+                              .reduce((sum, t) => sum + t.monto, 0);
+
+                            return (
+                              <div key={cliente.id} className="table-row">
+                                <div className="col-nombre">{cliente.nombre}</div>
+                                <div className="col-cedula">{cliente.cedula}</div>
+                                <div className="col-correo">
+                                  {cliente.correo || "-"}
+                                </div>
+                                <div className="col-ventas">
+                                  ${ventasCliente.toLocaleString("es-CO")}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                        {clientesVendedor.map((cliente) => {
-                          const ventasCliente = cliente.transacciones
-                            .filter((t) => t.tipo === "pedido")
-                            .reduce((sum, t) => sum + t.monto, 0);
-
-                          return (
-                            <div key={cliente.id} className="table-row">
-                              <div className="col-nombre">{cliente.nombre}</div>
-                              <div className="col-cedula">{cliente.cedula}</div>
-                              <div className="col-correo">
-                                {cliente.correo || "-"}
-                              </div>
-                              <div className="col-ventas">
-                                ${ventasCliente.toLocaleString("es-CO")}
-                              </div>
-                            </div>
-                          );
-                        })}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="sin-clientes">
-                      <p>📭 Este vendedor no tiene clientes asignados</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                    ) : (
+                      <div className="sin-clientes">
+                        <p>📭 Este vendedor no tiene clientes asignados</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </div>
 
-      {vendedores.length === 0 && (
+      {vendedoresConUsuarios.length === 0 && (
         <div className="empty-state">
           <p>No hay vendedores registrados</p>
         </div>
