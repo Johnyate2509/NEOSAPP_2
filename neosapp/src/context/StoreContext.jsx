@@ -1211,9 +1211,21 @@ const datosCliente = {
     if (!cliente) return false;
 
     const nuevoSaldo = Number(cliente.saldo ?? 0) - Number(monto || 0);
+    const nuevaTransacciones = [
+      ...(cliente.transacciones ?? []),
+      {
+        id: `${Date.now()}`,
+        tipo: "pago",
+        monto: Number(monto),
+        descripcion,
+        metodoPago,
+        fecha: new Date().toLocaleDateString("es-CO"),
+      },
+    ];
+
     const { error } = await supabase
       .from("clientes")
-      .update({ saldo: nuevoSaldo })
+      .update({ saldo: nuevoSaldo, transacciones: nuevaTransacciones })
       .eq("id", clienteId);
 
     if (error) {
@@ -1227,16 +1239,7 @@ const datosCliente = {
           ? {
               ...c,
               saldo: nuevoSaldo,
-              transacciones: [
-                ...(c.transacciones ?? []),
-                {
-                  id: `${Date.now()}`,
-                  tipo: "pago",
-                  monto: Number(monto),
-                  descripcion,
-                  fecha: new Date().toLocaleDateString("es-CO"),
-                },
-              ],
+              transacciones: nuevaTransacciones,
             }
           : c
       )
