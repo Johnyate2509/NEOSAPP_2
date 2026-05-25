@@ -254,6 +254,7 @@ const cargarProductos = async () => {
     })));
 
     setPedidos(pedidosAdaptados);
+    return pedidosAdaptados;
   };
 
   const cargarRepartidores = async () => {
@@ -348,16 +349,67 @@ const cargarProductos = async () => {
   };
 
   useEffect(() => {
+    const calcularSaldoCliente = (cliente, pedidosArray) => {
+      const transacciones = Array.isArray(cliente?.transacciones) ? cliente.transacciones : [];
+
+      const totalPedidosTransacciones = transacciones
+        .filter((trans) => String(trans.tipo).toLowerCase() === "pedido")
+        .reduce((acc, trans) => acc + Number(trans.monto ?? 0), 0);
+
+      const totalPagosTransacciones = transacciones
+        .filter((trans) => {
+          const tipo = String(trans.tipo).toLowerCase();
+          return tipo === "pago" || tipo === "abono";
+        })
+        .reduce((acc, trans) => acc + Number(trans.monto ?? 0), 0);
+
+      const tieneTransaccionesPedido = transacciones.some(
+        (trans) => String(trans.tipo).toLowerCase() === "pedido"
+      );
+
+      if (tieneTransaccionesPedido) {
+        return totalPedidosTransacciones - totalPagosTransacciones;
+      }
+
+      const pedidosCliente = pedidosArray.filter((pedido) => {
+        const clienteIdMatch = cliente?.id != null && String(pedido.cliente_id) === String(cliente.id);
+        const cedulaMatch = cliente?.cedula != null && String(pedido.clienteCedula) === String(cliente.cedula);
+        return clienteIdMatch || cedulaMatch;
+      });
+
+      const totalPedidos = pedidosCliente.reduce((acc, pedido) => acc + Number(pedido.total ?? 0), 0);
+      return totalPedidos - totalPagosTransacciones;
+    };
+
+    const reconciliarSaldosIniciales = (clientesArray, pedidosArray) => {
+      if (!Array.isArray(clientesArray) || !Array.isArray(pedidosArray)) return;
+
+      const clientesActualizados = clientesArray.map((cliente) => {
+        if (!cliente?.id) return cliente;
+        const saldoCalculado = calcularSaldoCliente(cliente, pedidosArray);
+        if (Number(saldoCalculado) !== Number(cliente.saldo ?? 0)) {
+          return {
+            ...cliente,
+            saldo: saldoCalculado,
+          };
+        }
+        return cliente;
+      });
+
+      setClientes(clientesActualizados);
+    };
+
     const cargarDatos = async () => {
       const productosCargados = await cargarProductos();
       const clientesCargados = await cargarClientes();
+      const pedidosCargados = await cargarPedidos(productosCargados, clientesCargados);
       await Promise.all([
-        cargarPedidos(productosCargados, clientesCargados),
         cargarRepartidores(),
         cargarVendedores(),
         cargarUsuariosVendedores(),
         cargarCategorias(),
       ]);
+      reconciliarSaldosIniciales(clientesCargados, pedidosCargados || []);
     };
 
     const init = async () => {
@@ -605,6 +657,44 @@ const cargarProductos = async () => {
       });
 
       setPedidos((prev) => [...prev, nuevoPedido]);
+
+      const clienteIdParaSaldo = clienteEncontrado?.id || clienteIdManual || pedidoCreado.cliente_id;
+      const clienteParaSaldo = clienteEncontrado || clientes.find((c) => String(c.id) === String(clienteIdParaSaldo));
+
+      if (clienteParaSaldo) {
+        const saldoActual = Number(clienteParaSaldo.saldo ?? 0);
+        const nuevoSaldoCliente = saldoActual + Number(total || 0);
+        const transaccionPedido = {
+          id: `pedido-${pedidoCreado.id}-${Date.now()}`,
+          tipo: "pedido",
+          monto: Number(total || 0),
+          descripcion: `Pedido ${pedidoCreado.id}`,
+          metodoPago: formaPago,
+          fecha: new Date().toLocaleDateString("es-CO"),
+        };
+
+        const nuevasTransacciones = [
+          ...(clienteParaSaldo.transacciones ?? []),
+          transaccionPedido,
+        ];
+
+        const { error: errorSaldo } = await supabase
+          .from("clientes")
+          .update({ saldo: nuevoSaldoCliente, transacciones: nuevasTransacciones })
+          .eq("id", clienteParaSaldo.id);
+
+        if (errorSaldo) {
+          console.error("Error actualizando saldo del cliente al crear pedido:", errorSaldo);
+        } else {
+          setClientes((prev) =>
+            prev.map((c) =>
+              String(c.id) === String(clienteParaSaldo.id)
+                ? { ...c, saldo: nuevoSaldoCliente, transacciones: nuevasTransacciones }
+                : c
+            )
+          );
+        }
+      }
 
       // Enviar correo de confirmación al cliente
       if (emailDestino) {
