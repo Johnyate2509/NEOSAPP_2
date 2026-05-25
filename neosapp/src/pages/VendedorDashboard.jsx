@@ -5,10 +5,11 @@ import { validarDatosPedido, validarCarrito } from "../utils/validaciones";
 import "../styles/vendedor-dashboard.css";
 
 export default function VendedorDashboard() {
-  const { obtenerDatosUsuario } = useAuth();
+  const { user, obtenerDatosUsuario } = useAuth();
   const { clientes, pedidos, productos, crearPedido } = useStore();
   const vendedorData = obtenerDatosUsuario();
-  
+  const vendedorId = vendedorData?.id ?? vendedorData?.usuario_id ?? user?.id ?? null;
+
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState(null);
   const [montoPago, setMontoPago] = useState("");
   const [metodoPago, setMetodoPago] = useState("efectivo");
@@ -22,9 +23,10 @@ export default function VendedorDashboard() {
   const [cargandoPedido, setCargandoPedido] = useState(false);
 
   // Obtener clientes del vendedor
-  const clientesVendedor = clientes.filter(
-    c => c.vendedor_id === vendedorData?.id
-  );
+  const clientesVendedor = clientes.filter((cliente) => {
+    const vendedorAsignado = cliente.vendedor_usuario_id ?? cliente.vendedor_id ?? null;
+    return String(vendedorAsignado) === String(vendedorId);
+  });
 
   const totalPedidosVendedor = pedidos.filter(p => 
     clientesVendedor.some(c => c.cedula === p.clienteCedula)

@@ -1072,9 +1072,10 @@ const datosCliente = {
   };
 
   const obtenerClientesPorVendedor = (vendedorId) =>
-    clientes.filter(
-      (cliente) => String(cliente.vendedor_id) === String(vendedorId)
-    );
+    clientes.filter((cliente) => {
+      const vendedorAsignado = cliente.vendedor_usuario_id ?? cliente.vendedor_id ?? null;
+      return String(vendedorAsignado) === String(vendedorId);
+    });
 
   const calcularVentasPorVendedor = (vendedorId) => {
     const clientesVendedor = obtenerClientesPorVendedor(vendedorId);

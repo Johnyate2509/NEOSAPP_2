@@ -146,13 +146,22 @@ export function AuthProvider({ children }) {
   };
 
   const getUserMetadata = () => {
+    const metadataBase = {
+      ...(user?.user_metadata || {}),
+      id: user?.id || perfil?.id || undefined,
+      usuario_id: user?.id || perfil?.id || undefined,
+    };
+
     if (perfil) {
       return {
-        ...user?.user_metadata,
+        ...metadataBase,
         ...perfil,
+        id: perfil.id || metadataBase.id,
+        usuario_id: perfil.id || metadataBase.usuario_id,
       };
     }
-    return user?.user_metadata || {};
+
+    return metadataBase;
   };
 
   const getUserAvatarUrl = () => {

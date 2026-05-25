@@ -3,14 +3,16 @@ import { useStore } from "../context/StoreContext";
 import "../styles/vendedor-reportes.css";
 
 export default function ReportesVendedor() {
-  const { obtenerDatosUsuario } = useAuth();
+  const { user, obtenerDatosUsuario } = useAuth();
   const { clientes, pedidos } = useStore();
   const vendedorData = obtenerDatosUsuario();
+  const vendedorId = vendedorData?.id ?? vendedorData?.usuario_id ?? user?.id ?? null;
 
   // Obtener clientes del vendedor
-  const clientesVendedor = clientes.filter(
-    c => c.vendedor_id === vendedorData?.id
-  );
+  const clientesVendedor = clientes.filter((cliente) => {
+    const vendedorAsignado = cliente.vendedor_usuario_id ?? cliente.vendedor_id ?? null;
+    return String(vendedorAsignado) === String(vendedorId);
+  });
 
   // Obtener pedidos del vendedor
   const pedidosVendedor = pedidos.filter(p =>
