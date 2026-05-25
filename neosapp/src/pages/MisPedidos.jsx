@@ -115,6 +115,36 @@ export default function MisPedidos() {
           </>
         )}
       </div>
+
+      <div className="transacciones-section">
+        <h2>💳 Historial de Transacciones</h2>
+        {Array.isArray(clienteActual.transacciones) && clienteActual.transacciones.length > 0 ? (
+          <div className="transacciones-list">
+            {clienteActual.transacciones.map((trans) => {
+              const tipo = String(trans.tipo).toLowerCase();
+              const signo = tipo === "pedido" ? "+" : "-";
+              const claseMonto = tipo === "pedido" ? "pedido" : "pago";
+              const descripcion = trans.descripcion || (tipo === "pedido" ? "Pedido" : "Pago/Abono");
+
+              return (
+                <div key={trans.id} className={`transaccion-item ${tipo}`}>
+                  <div className="trans-info">
+                    <p className="trans-descripcion">{descripcion}</p>
+                    <p className="trans-fecha">{trans.fecha}</p>
+                  </div>
+                  <p className={`trans-monto ${claseMonto}`}>
+                    {signo}${Number(trans.monto || 0).toLocaleString()}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="sin-transacciones">
+            <p>No hay transacciones registradas aún</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

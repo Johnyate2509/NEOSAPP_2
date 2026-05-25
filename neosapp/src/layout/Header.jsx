@@ -127,7 +127,7 @@ export default function Header({ onToggleSidebar, sidebarAbierto }) {
                           setMostrarMenu(false);
                         }}
                       >
-                        👤 Mi Perfil
+                         Mi Perfil
                       </button>
                       <hr className="menu-divider" />
                     </>

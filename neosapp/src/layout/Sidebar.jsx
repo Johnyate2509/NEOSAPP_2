@@ -28,7 +28,7 @@ export default function Sidebar() {
         {/* Pedidos - para cliente */}
         {esCliente && (
           <NavLink to="/mis-pedidos">
-             📦 Mis Pedidos
+              Mis Pedidos
           </NavLink>
         )}
 
@@ -64,10 +64,6 @@ export default function Sidebar() {
 
             <NavLink to="/vendedores">
                Vendedores
-            </NavLink>
-
-            <NavLink to="/mapa">
-               Mapa
             </NavLink>
 
             <NavLink to="/admin-clientes">

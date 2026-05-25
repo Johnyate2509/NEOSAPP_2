@@ -9,7 +9,9 @@ export default function Vendedores() {
     calcularVentasPorVendedor,
     crearVendedor,
     eliminarVendedor,
+    pedidos,
   } = useStore();
+  
   const [vendedorSeleccionado, setVendedorSeleccionado] = useState(null);
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevazona, setNuevazona] = useState("");
@@ -160,9 +162,9 @@ export default function Vendedores() {
                             <div className="col-ventas">Ventas</div>
                           </div>
                           {clientesVendedor.map((cliente) => {
-                            const ventasCliente = cliente.transacciones
-                              .filter((t) => t.tipo === "pedido")
-                              .reduce((sum, t) => sum + t.monto, 0);
+                            const ventasCliente = (pedidos || [])
+                              .filter((p) => String(p.cliente_id) === String(cliente.id) || String(p.clienteCedula) === String(cliente.cedula))
+                              .reduce((sum, p) => sum + Number(p.total || 0), 0);
 
                             return (
                               <div key={cliente.id} className="table-row">
