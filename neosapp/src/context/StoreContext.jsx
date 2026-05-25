@@ -1226,6 +1226,23 @@ const datosCliente = {
     return true;
   };
 
+  const actualizarClienteDireccion = async (clienteId, direccion) => {
+    const { error } = await supabase
+      .from("clientes")
+      .update({ direccion })
+      .eq("id", clienteId);
+
+    if (error) {
+      console.error("Error actualizando dirección:", error);
+      return false;
+    }
+
+    setClientes((prev) =>
+      prev.map((c) => (c.id === clienteId ? { ...c, direccion } : c))
+    );
+    return true;
+  };
+
   const actualizarClienteVendedor = async (clienteId, vendedorId) => {
     const vendedorIdNormalized = vendedorId || null;
 
@@ -1515,6 +1532,7 @@ return (
       eliminarRepartidor,
       registrarPago,
       actualizarClienteTelefono,
+      actualizarClienteDireccion,
       cambiarEstadoPedido,
       eliminarPedido,
       asignarRepartidor,

@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "../context/StoreContext";
 import "../styles/clientes.css";
 
 
 export default function Clientes() {
-  const { clientes, pedidos, registrarPago, actualizarClienteTelefono } = useStore();
+  const {
+    clientes,
+    pedidos,
+    registrarPago,
+    actualizarClienteTelefono,
+    actualizarClienteDireccion,
+  } = useStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState(null);
   const [montoPago, setMontoPago] = useState("");
   const [metodoPago, setMetodoPago] = useState("efectivo");
   const [descripcionPago, setDescripcionPago] = useState("");
   const [telefonoTemporal, setTelefonoTemporal] = useState("");
+  const [direccionTemporal, setDireccionTemporal] = useState("");
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const clientesFiltrados = normalizedSearch
@@ -37,6 +44,17 @@ export default function Clientes() {
     ? pedidos.filter((p) => p.clienteCedula === clienteSeleccionado.cedula)
     : [];
 
+  useEffect(() => {
+    if (!clienteSeleccionado) {
+      setTelefonoTemporal("");
+      setDireccionTemporal("");
+      return;
+    }
+
+    setTelefonoTemporal(clienteSeleccionado.telefono || "");
+    setDireccionTemporal(clienteSeleccionado.direccion || "");
+  }, [clienteSeleccionado]);
+
   const handleRegistrarPago = () => {
     if (!clienteSeleccionado || !montoPago || parseFloat(montoPago) <= 0) {
       alert("Por favor completa los datos");
@@ -52,16 +70,48 @@ export default function Clientes() {
     alert("Pago registrado correctamente");
   };
 
-  const handleActualizarTelefono = () => {
-    if (!clienteSeleccionado || !telefonoTemporal.trim()) {
-      alert("Por favor completa el teléfono");
+  const handleActualizarTelefono = async () => {
+    if (!clienteSeleccionado) {
+      alert("Selecciona un cliente primero");
       return;
     }
-    
-    actualizarClienteTelefono(clienteSeleccionado.id, telefonoTemporal);
-    
-    setTelefonoTemporal("");
-    alert("Teléfono actualizado correctamente");
+
+    const telefono = telefonoTemporal.trim();
+
+    if (!telefono) {
+      alert("Ingresa un número de celular");
+      return;
+    }
+
+    const actualizado = await actualizarClienteTelefono(clienteSeleccionado.id, telefono);
+
+    if (actualizado) {
+      alert("Número de celular actualizado correctamente");
+    } else {
+      alert("No se pudo actualizar el número de celular");
+    }
+  };
+
+  const handleActualizarDireccion = async () => {
+    if (!clienteSeleccionado) {
+      alert("Selecciona un cliente primero");
+      return;
+    }
+
+    const direccion = direccionTemporal.trim();
+
+    if (!direccion) {
+      alert("Ingresa una dirección de residencia");
+      return;
+    }
+
+    const actualizado = await actualizarClienteDireccion(clienteSeleccionado.id, direccion);
+
+    if (actualizado) {
+      alert("Dirección de residencia actualizada correctamente");
+    } else {
+      alert("No se pudo actualizar la dirección de residencia");
+    }
   };
 
   return (
@@ -145,6 +195,22 @@ export default function Clientes() {
                   onChange={(e) => setTelefonoTemporal(e.target.value)}
                 />
                 <button onClick={handleActualizarTelefono} className="btn-actualizar">
+                  Actualizar
+                </button>
+              </div>
+            </div>
+
+            {/* Actualizar dirección */}
+            <div className="seccion-direccion">
+              <h4>Actualizar dirección</h4>
+              <div className="input-group">
+                <input
+                  type="text"
+                  placeholder="Ej: Calle 123 #45-67"
+                  value={direccionTemporal}
+                  onChange={(e) => setDireccionTemporal(e.target.value)}
+                />
+                <button onClick={handleActualizarDireccion} className="btn-actualizar">
                   Actualizar
                 </button>
               </div>
