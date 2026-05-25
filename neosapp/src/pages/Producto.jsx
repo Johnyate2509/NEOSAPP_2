@@ -365,27 +365,30 @@ export default function Producto() {
   // Obtener clientes según el rol del usuario
   const obtenerClientesFiltrados = () => {
     let clientesFiltrados = clientes;
-    
-    // Si es vendedor, mostrar solo sus clientes
+
     if (esVendedor()) {
-      clientesFiltrados = clientes.filter(c => vendedorData?.clientesIds?.includes(c.id));
+      const vendedorId = vendedorData?.id ?? vendedorData?.usuario_id ?? user?.id ?? null;
+      clientesFiltrados = clientes.filter((cliente) => {
+        const vendedorAsignado = cliente.vendedor_usuario_id ?? cliente.vendedor_id ?? null;
+        return String(vendedorAsignado) === String(vendedorId);
+      });
     }
-    
+
     // Filtrar por búsqueda
     if (busquedaCliente.trim()) {
       const busqueda = busquedaCliente.toLowerCase();
-      clientesFiltrados = clientesFiltrados.filter(c => 
-        c.nombre.toLowerCase().includes(busqueda) || 
+      clientesFiltrados = clientesFiltrados.filter(c =>
+        c.nombre.toLowerCase().includes(busqueda) ||
         c.cedula.includes(busqueda)
       );
     }
-    
+
     return clientesFiltrados;
   };
 
   // Ordenar productos alfabéticamente
   const obtenerProductosOrdenados = (productosFiltrados) => {
-    return [...productosFiltrados].sort((a, b) => 
+    return [...productosFiltrados].sort((a, b) =>
       a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
     );
   };
