@@ -19,7 +19,7 @@ export const validarEmail = (email) => {
  */
 export const validarTelefono = (telefono) => {
   const regexTelefono = /^[0-9]{7,}$/;
-  return !telefono || regexTelefono.test(telefono);
+  return telefono && regexTelefono.test(telefono);
 };
 
 /**
@@ -129,8 +129,8 @@ export const validarDatosPedido = (datoPedido) => {
   }
 
   // Validar teléfono
-  if (!validarTelefono(datoPedido.telefono)) {
-    errores.push("El teléfono no tiene un formato válido");
+  if (!datoPedido.telefono || !validarTelefono(datoPedido.telefono)) {
+    errores.push("El teléfono es requerido y debe tener al menos 7 dígitos");
   }
 
   // Validar forma de pago

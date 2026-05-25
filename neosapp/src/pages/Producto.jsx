@@ -408,8 +408,8 @@ const obtenerProductosFiltrados = (categoria) => {
   };
 
   const finalizarPedido = async () => {
-    if (!datosCliente.cedula || !datosCliente.nombre || !datosCliente.direccion || !datosCliente.correoElectronico || !datosCliente.numeroCelular || !datosCliente.password_hash || carrito.length === 0) {
-      alert("Por favor completa todos los datos (Cédula, Nombre, Dirección, correo, teléfono y contraseña) y agrega productos");
+    if (!datosCliente.cedula || !datosCliente.nombre || !datosCliente.direccion || !datosCliente.correoElectronico || !datosCliente.numeroCelular || carrito.length === 0) {
+      alert("Por favor completa todos los datos (Cédula, Nombre, Dirección, correo y teléfono) y agrega productos");
       return;
     }
 
@@ -420,8 +420,7 @@ const obtenerProductosFiltrados = (categoria) => {
       datosCliente.direccion,
       datosCliente.numeroCelular,
       datosCliente.correoElectronico,
-      null,
-      datosCliente.password_hash
+      null
     );
 
     if (resultadoCliente?.error) {
@@ -1209,13 +1208,6 @@ const obtenerProductosFiltrados = (categoria) => {
                     value={datosCliente.numeroCelular}
                     onChange={(e) =>
                       setDatosCliente({ ...datosCliente, numeroCelular: e.target.value })
-                    }
-                  />
-                                    <input
-                    placeholder="Contraseña"
-                    value={datosCliente.password_hash}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, password_hash: e.target.value })
                     }
                   />
                 </>

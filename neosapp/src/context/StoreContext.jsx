@@ -529,6 +529,7 @@ const cargarProductos = async () => {
       forma_pago: formaPago,
       estado: "Pendiente",
       total,
+      cliente_id: clienteEncontrado?.id || null,
     };
 
     try {
