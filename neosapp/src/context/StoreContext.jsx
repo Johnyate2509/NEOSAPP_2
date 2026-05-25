@@ -70,7 +70,7 @@ const adaptarProducto = (p) => ({
       cliente: clienteInfo?.nombre || p.nombre || p.cliente || "",
       clienteCedula: p.cedula,
       cliente_id: clienteId,
-      direccion: p.direccion,
+      direccion: p.direccion || clienteInfo?.direccion || "",
       fecha,
       fechaEntrega,
       formaPago: p.forma_pago ?? p.formaPago ?? "",

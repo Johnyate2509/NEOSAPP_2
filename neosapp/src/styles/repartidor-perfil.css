@@ -508,6 +508,39 @@
 }
 
 /* =================================
+   FOOTER DE TARJETA
+   ================================= */
+
+.pedido-card-footer {
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cambiar-estado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.cambiar-estado label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.cambiar-estado .estado-select {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* =================================
    RESPONSIVE
    ================================= */
 
@@ -597,6 +630,130 @@
   .estado-select {
     width: 100%;
     min-width: auto;
+  }
+
+  .cambiar-estado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cambiar-estado label {
+    text-align: left;
+  }
+
+  .cambiar-estado .estado-select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .repartidor-perfil {
+    padding: 10px;
+  }
+
+  .perfil-header {
+    padding: 15px;
+  }
+
+  .perfil-header h2 {
+    font-size: 22px;
+  }
+
+  .estadisticas-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .estadistica {
+    padding: 15px;
+  }
+
+  .estadistica .numero {
+    font-size: 24px;
+  }
+
+  .estadistica h4 {
+    font-size: 12px;
+  }
+
+  .pedidos-header {
+    margin-bottom: 20px;
+  }
+
+  .pedidos-header h3 {
+    font-size: 18px;
+  }
+
+  .filtro-container {
+    width: 100%;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .filtro-container label {
+    font-size: 12px;
+  }
+
+  .filtro-select {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .pedido-card {
+    border-left-width: 4px;
+  }
+
+  .pedido-card-header {
+    padding: 15px;
+  }
+
+  .pedido-numero-estado h4 {
+    font-size: 16px;
+  }
+
+  .estado-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .pedido-fecha {
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  .pedido-cliente-info {
+    padding: 15px;
+  }
+
+  .cliente-detalle {
+    gap: 15px;
+  }
+
+  .detalle-item label {
+    font-size: 12px;
+  }
+
+  .detalle-item p {
+    font-size: 14px;
+  }
+
+  .pedido-card-footer {
+    padding: 12px 15px;
+  }
+
+  .cambiar-estado {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cambiar-estado label {
+    font-size: 12px;
+  }
+
+  .estado-select {
+    font-size: 13px;
+    padding: 8px 12px;
+    width: 100%;
   }
 }
 
