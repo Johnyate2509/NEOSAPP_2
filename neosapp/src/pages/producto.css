@@ -280,10 +280,8 @@
     gap: 12px;
   }
 
-  .scroll-btn,
-  .btn-carrusel-prev,
-  .btn-carrusel-next {
-    display: none;
+  .scroll-btn {
+    display: none !important;
   }
 
   .producto-card {
@@ -319,6 +317,7 @@
   }
 
   .scroll-btn {
+    display: none !important;
     width: 36px;
     height: 36px;
   }

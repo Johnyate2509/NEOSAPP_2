@@ -48,15 +48,31 @@ const adaptarProducto = (p) => ({
       ? (clientesData || clientes).find((c) => String(c.id) === String(clienteId))
       : null;
 
+    const rawFecha = p.fecha ?? p.fecha_entrega ?? null;
+    const fechaEntrega = rawFecha
+      ? /^\d{4}-\d{2}-\d{2}$/.test(rawFecha)
+        ? rawFecha
+        : /^\d{2}\/\d{2}\/\d{4}$/.test(rawFecha)
+        ? rawFecha.split("/").reverse().join("-")
+        : !Number.isNaN(Date.parse(rawFecha))
+        ? new Date(rawFecha).toISOString().split("T")[0]
+        : rawFecha
+      : p.created_at
+      ? new Date(p.created_at).toISOString().split("T")[0]
+      : "";
+
+    const fecha = fechaEntrega
+      ? new Date(fechaEntrega).toLocaleDateString("es-CO")
+      : "";
+
     return {
       id: p.id,
       cliente: clienteInfo?.nombre || p.nombre || p.cliente || "",
       clienteCedula: p.cedula,
       cliente_id: clienteId,
       direccion: p.direccion,
-      fecha:
-        p.fecha ||
-        (p.created_at ? new Date(p.created_at).toLocaleDateString("es-CO") : ""),
+      fecha,
+      fechaEntrega,
       formaPago: p.forma_pago ?? p.formaPago ?? "",
       items,
       total: p.total ?? p.totalPedido ?? 0,
@@ -1396,6 +1412,65 @@ const datosCliente = {
     }
   };
 
+  const actualizarFechaPedido = async (pedidoId, fecha) => {
+    const formatearFechaLocal = (fechaIso) => {
+      if (!fechaIso) return "";
+      const fechaObj = new Date(fechaIso);
+      if (Number.isNaN(fechaObj.getTime())) return fechaIso;
+      return fechaObj.toLocaleDateString("es-CO");
+    }; 
+
+    const fechaFormateada = formatearFechaLocal(fecha);
+
+    const actualizarLocal = (campoFecha) => {
+      setPedidos((prev) =>
+        prev.map((pedido) =>
+          pedido.id === pedidoId
+            ? { ...pedido, fecha: campoFecha, fechaEntrega: fecha }
+            : pedido
+        )
+      );
+    };
+
+    try {
+      const { error } = await supabase
+        .from("pedidos")
+        .update({ fecha })
+        .eq("id", pedidoId);
+
+      if (error) {
+        const mensaje = String(error.message || "").toLowerCase();
+        if (
+          mensaje.includes("could not find column \"fecha\"") ||
+          mensaje.includes("columna \"fecha\"") ||
+          String(error.code) === "42703"
+        ) {
+          const { error: errorEntrega } = await supabase
+            .from("pedidos")
+            .update({ fecha_entrega: fecha })
+            .eq("id", pedidoId);
+
+          if (errorEntrega) {
+            console.error("Error actualizando fecha_entrega de pedido:", errorEntrega);
+            return false;
+          }
+
+          actualizarLocal(fechaFormateada);
+          return true;
+        }
+
+        console.error("Error actualizando fecha de pedido:", error);
+        return false;
+      }
+
+      actualizarLocal(fechaFormateada);
+      return true;
+    } catch (err) {
+      console.error("Excepción actualizando fecha de pedido:", err);
+      return false;
+    }
+  };
+
   const eliminarPedido = async (pedidoId) => {
     const { error } = await supabase
       .from("pedidos")
@@ -1479,51 +1554,94 @@ const datosCliente = {
     }
   };
 
-  const updatePedidoItems = (pedidoId, items) => {
-    setPedidos((prev) =>
-      prev.map((pedido) =>
-        pedido.id === pedidoId
-          ? {
-              ...pedido,
-              items,
-              total: items.reduce(
-                (sum, item) => sum + Number(item.precio) * Number(item.cantidad || 1),
-                0
-              ),
-            }
-          : pedido
-      )
-    );
+  const updatePedidoItems = async (pedidoId, items) => {
+    const pedido = pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) return false;
+
+    try {
+      const { error: errorEliminar } = await supabase
+        .from("pedido_detalle")
+        .delete()
+        .eq("pedido_id", pedidoId);
+
+      if (errorEliminar) {
+        console.error("Error eliminando items antiguos de pedido:", errorEliminar);
+        return false;
+      }
+
+      if (items.length > 0) {
+        const detalles = items.map((item) => ({
+          pedido_id: pedidoId,
+          producto_id: item.id,
+          cantidad: item.cantidad || 1,
+          precio: item.precio,
+        }));
+
+        const { error: errorInsertar } = await supabase
+          .from("pedido_detalle")
+          .insert(detalles);
+
+        if (errorInsertar) {
+          console.error("Error insertando items de pedido:", errorInsertar);
+          return false;
+        }
+      }
+
+      const total = items.reduce(
+        (sum, item) => sum + Number(item.precio) * Number(item.cantidad || 1),
+        0
+      );
+
+      const { error: errorActualizarPedido } = await supabase
+        .from("pedidos")
+        .update({ total })
+        .eq("id", pedidoId);
+
+      if (errorActualizarPedido) {
+        console.error("Error actualizando total de pedido:", errorActualizarPedido);
+        return false;
+      }
+
+      setPedidos((prev) =>
+        prev.map((pedidoItem) =>
+          pedidoItem.id === pedidoId
+            ? { ...pedidoItem, items, total }
+            : pedidoItem
+        )
+      );
+
+      return true;
+    } catch (err) {
+      console.error("Excepción actualizando items de pedido:", err);
+      return false;
+    }
   };
 
-  const agregarItemPedido = (pedidoId, productoId, nombre, precio, cantidad) => {
+  const agregarItemPedido = async (pedidoId, productoId, nombre, precio, cantidad) => {
     const pedido = pedidos.find((p) => p.id === pedidoId);
     if (!pedido) return false;
 
     const nuevoItem = { id: productoId, nombre, precio, cantidad };
     const items = [...(pedido.items || []), nuevoItem];
-    updatePedidoItems(pedidoId, items);
-    return true;
+    return await updatePedidoItems(pedidoId, items);
   };
 
-  const eliminarItemPedido = (pedidoId, productoId) => {
+  const eliminarItemPedido = async (pedidoId, productoId) => {
     const pedido = pedidos.find((p) => p.id === pedidoId);
     if (!pedido) return false;
 
     const items = (pedido.items || []).filter((item) => item.id !== productoId);
-    updatePedidoItems(pedidoId, items);
-    return true;
+    return await updatePedidoItems(pedidoId, items);
   };
 
-  const actualizarCantidadItemPedido = (pedidoId, productoId, cantidad) => {
+  const actualizarCantidadItemPedido = async (pedidoId, productoId, cantidad) => {
     const pedido = pedidos.find((p) => p.id === pedidoId);
     if (!pedido) return false;
 
     const items = (pedido.items || []).map((item) =>
       item.id === productoId ? { ...item, cantidad } : item
     );
-    updatePedidoItems(pedidoId, items);
-    return true;
+    return await updatePedidoItems(pedidoId, items);
   };
 
 return (
@@ -1552,6 +1670,7 @@ return (
       actualizarClienteTelefono,
       actualizarClienteDireccion,
       cambiarEstadoPedido,
+      actualizarFechaPedido,
       eliminarPedido,
       asignarRepartidor,
       agregarItemPedido,

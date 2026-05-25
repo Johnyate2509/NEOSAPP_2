@@ -102,6 +102,22 @@
   word-break: break-word;
 }
 
+.fecha-entrega-input {
+  width: 100%;
+  max-width: 220px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.fecha-entrega-input:focus {
+  outline: none;
+  border-color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
 .pedido-info-cliente strong {
   color: #1e40af;
   font-size: 15px;
@@ -825,7 +841,16 @@
   .pedidos-table td:nth-child(3):before { content: "Fecha:"; }
   .pedidos-table td:nth-child(4):before { content: "Valor:"; }
   .pedidos-table td:nth-child(5):before { content: "Estado:"; }
-  .pedidos-table td:nth-child(6):before { content: "Acción:"; }
+  .pedidos-table td:nth-child(6):before { content: "Repartidor:"; }
+  .pedidos-table td:nth-child(7):before { content: "Acción:"; }
+
+  .pedidos-table td {
+    padding-left: 52%;
+  }
+
+  .pedidos-table td:before {
+    width: 48%;
+  }
 
   .btn-detalle {
     width: 100%;
@@ -937,14 +962,16 @@
     padding: 8px 0;
     text-align: left;
     position: relative;
-    padding-left: 50%;
+    padding-left: 52%;
+    word-break: break-word;
+    white-space: normal;
   }
 
   .pedidos-table td:before {
     content: attr(data-label);
     position: absolute;
     left: 0;
-    width: 45%;
+    width: 48%;
     padding-right: 10px;
     white-space: nowrap;
     font-weight: 600;

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useStore } from "../context/StoreContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../context/supabaseClient";
@@ -48,6 +48,7 @@ export default function Producto() {
   const [scrollNecesario, setScrollNecesario] = useState({});
   const [dragging, setDragging] = useState({});
   const [dragStart, setDragStart] = useState({});
+  const [esVistaMovil, setEsVistaMovil] = useState(false);
   
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevo, setNuevo] = useState({
@@ -59,6 +60,16 @@ export default function Producto() {
     imagenes: [],
   });
   const [imagenesVista, setImagenesVista] = useState([]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setEsVistaMovil(window.innerWidth <= 820);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Estados para ver detalles del producto
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
@@ -1024,7 +1035,7 @@ const obtenerProductosFiltrados = (categoria) => {
                   className="imagen-principal"
                 />
                 
-                {productoDetalles.imagenes.length > 1 && (
+                {productoDetalles.imagenes.length > 1 && !esVistaMovil && (
                   <>
                     <button 
                       className="btn-carrusel-prev"

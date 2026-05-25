@@ -11,7 +11,8 @@ export default function Pedidos() {
     asignarRepartidor,
     agregarItemPedido,
     eliminarItemPedido,
-    actualizarCantidadItemPedido
+    actualizarCantidadItemPedido,
+    actualizarFechaPedido,
   } = useStore();
 
   const [pedidoExpandido, setPedidoExpandido] = useState(null);
@@ -50,6 +51,30 @@ export default function Pedidos() {
     }
   };
 
+  const formatFechaDisplay = (fechaIso) => {
+    if (!fechaIso) return "";
+    const fecha = new Date(fechaIso);
+    if (Number.isNaN(fecha.getTime())) return fechaIso;
+    return fecha.toLocaleDateString("es-CO");
+  };
+
+  const manejarCambioFechaEntrega = async (pedidoId, fechaEntrega) => {
+    const success = await actualizarFechaPedido(pedidoId, fechaEntrega);
+    if (!success) return;
+
+    const fechaFormateada = formatFechaDisplay(fechaEntrega);
+    if (modalPedido && modalPedido.id === pedidoId) {
+      setModalPedido((prev) =>
+        prev ? { ...prev, fechaEntrega, fecha: fechaFormateada } : null
+      );
+    }
+    if (pedidoExpandido === pedidoId) {
+      setPedidoTemp((prev) =>
+        prev ? { ...prev, fechaEntrega, fecha: fechaFormateada } : prev
+      );
+    }
+  };
+
   const abrirEdicion = (pedido) => {
     setPedidoExpandido(pedido.id);
     setPedidoTemp({ ...pedido });
@@ -60,21 +85,57 @@ export default function Pedidos() {
     setPedidoTemp({});
   };
 
-  const handleAgregarItem = (pedidoId, productoId) => {
+  const actualizarItemsLocal = (items) => {
+    const nuevoTotal = items.reduce(
+      (sum, item) => sum + Number(item.precio) * Number(item.cantidad || 1),
+      0
+    );
+
+    setPedidoTemp((prev) =>
+      prev && prev.id
+        ? { ...prev, items, total: nuevoTotal }
+        : prev
+    );
+
+    setModalPedido((prev) =>
+      prev && prev.id
+        ? { ...prev, items, total: nuevoTotal }
+        : prev
+    );
+  };
+
+  const handleAgregarItem = async (pedidoId, productoId) => {
     const producto = productos.find((p) => p.id === productoId);
-    if (producto) {
-      agregarItemPedido(pedidoId, productoId, producto.nombre, producto.precio, 1);
-    }
+    if (!producto) return;
+
+    const success = await agregarItemPedido(pedidoId, productoId, producto.nombre, producto.precio, 1);
+    if (!success) return;
+
+    const nuevosItems = [
+      ...(pedidoTemp.items || []),
+      { id: productoId, nombre: producto.nombre, precio: producto.precio, cantidad: 1 },
+    ];
+    actualizarItemsLocal(nuevosItems);
   };
 
-  const handleEliminarItem = (pedidoId, productoId) => {
-    eliminarItemPedido(pedidoId, productoId);
+  const handleEliminarItem = async (pedidoId, productoId) => {
+    const success = await eliminarItemPedido(pedidoId, productoId);
+    if (!success) return;
+
+    const nuevosItems = (pedidoTemp.items || []).filter((item) => item.id !== productoId);
+    actualizarItemsLocal(nuevosItems);
   };
 
-  const handleActualizarCantidad = (pedidoId, productoId, nuevaCantidad) => {
-    if (nuevaCantidad > 0) {
-      actualizarCantidadItemPedido(pedidoId, productoId, nuevaCantidad);
-    }
+  const handleActualizarCantidad = async (pedidoId, productoId, nuevaCantidad) => {
+    if (nuevaCantidad <= 0) return;
+
+    const success = await actualizarCantidadItemPedido(pedidoId, productoId, nuevaCantidad);
+    if (!success) return;
+
+    const nuevosItems = (pedidoTemp.items || []).map((item) =>
+      item.id === productoId ? { ...item, cantidad: nuevaCantidad } : item
+    );
+    actualizarItemsLocal(nuevosItems);
   };
 
   const productosDisponibles = productos.filter(
@@ -83,19 +144,52 @@ export default function Pedidos() {
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  const pedidosFiltrados = pedidos.filter((p) => {
-    const cliente = (p?.cliente ?? "").toLowerCase();
-    const id = p?.id != null ? p.id.toString() : "";
+  const parseFechaPedido = (fecha) => {
+    if (!fecha) return NaN;
+    const fechaTexto = String(fecha).trim();
 
-    if (!normalizedSearchTerm) {
-      return true;
+    const isoMatch = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      return new Date(fechaTexto).getTime();
     }
 
-    return (
-      cliente.includes(normalizedSearchTerm) ||
-      id.includes(normalizedSearchTerm)
-    );
-  });
+    const dmyMatch = fechaTexto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (dmyMatch) {
+      const [, dia, mes, año] = dmyMatch;
+      return new Date(Number(año), Number(mes) - 1, Number(dia)).getTime();
+    }
+
+    const parsed = Date.parse(fechaTexto);
+    return Number.isNaN(parsed) ? NaN : parsed;
+  };
+
+  const pedidosFiltrados = pedidos
+    .filter((p) => {
+      const cliente = (p?.cliente ?? "").toLowerCase();
+      const id = p?.id != null ? p.id.toString() : "";
+
+      if (!normalizedSearchTerm) {
+        return true;
+      }
+
+      return (
+        cliente.includes(normalizedSearchTerm) ||
+        id.includes(normalizedSearchTerm)
+      );
+    })
+    .sort((a, b) => {
+      const fechaA = a.fechaEntrega || a.fecha || "";
+      const fechaB = b.fechaEntrega || b.fecha || "";
+      const fechaDateA = parseFechaPedido(fechaA);
+      const fechaDateB = parseFechaPedido(fechaB);
+
+      if (!Number.isNaN(fechaDateA) && !Number.isNaN(fechaDateB)) {
+        return fechaDateA - fechaDateB;
+      }
+      if (!Number.isNaN(fechaDateA)) return -1;
+      if (!Number.isNaN(fechaDateB)) return 1;
+      return Number(b.id) - Number(a.id);
+    });
 
   return (
     <div className="pedidos-page">
@@ -209,7 +303,19 @@ export default function Pedidos() {
                 <div className="pedido-info-cliente">
                   <p><strong>Cliente:</strong> {modalPedido.cliente}</p>
                   <p><strong>Dirección:</strong> {modalPedido.direccion}</p>
-                  <p><strong>Fecha:</strong> {modalPedido.fecha}</p>
+                  <p>
+                    <strong>Fecha de entrega:</strong>{" "}
+                    {pedidoExpandido === modalPedido.id ? (
+                      <input
+                        type="date"
+                        value={pedidoTemp.fechaEntrega || modalPedido.fechaEntrega || ""}
+                        onChange={(e) => manejarCambioFechaEntrega(modalPedido.id, e.target.value)}
+                        className="fecha-entrega-input"
+                      />
+                    ) : (
+                      modalPedido.fecha || "No definida"
+                    )}
+                  </p>
                   <p>
                     <strong>Forma de pago:</strong>{" "}
                     <span
@@ -225,7 +331,7 @@ export default function Pedidos() {
                   <div className="pedido-items-editable">
                     <h5>Productos:</h5>
                     <div className="items-container">
-                      {modalPedido.items.map((item, index) => (
+                      {pedidoTemp.items?.map((item, index) => (
                         <div key={index} className="pedido-item-editable">
                           <div className="item-info">
                             <span className="item-nombre">{item.nombre}</span>
@@ -337,7 +443,7 @@ export default function Pedidos() {
                   </div>
                 )}
 
-                <p className="pedido-total"><strong>Total:</strong> ${modalPedido.total.toLocaleString()}</p>
+                <p className="pedido-total"><strong>Total:</strong> ${((pedidoExpandido === modalPedido.id ? pedidoTemp.total : modalPedido.total) || 0).toLocaleString()}</p>
 
                 {pedidoExpandido === modalPedido.id && (
                   <div className="pedido-acciones">

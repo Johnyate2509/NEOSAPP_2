@@ -62,10 +62,19 @@
   padding: 16px;
   border-radius: 8px;
   width: 220px;
+  max-width: 100%;
   background-color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   animation: slideInDown 0.4s ease-out;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-repartidor h4,
+.tarjeta-repartidor p {
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .tarjeta-repartidor:hover {
