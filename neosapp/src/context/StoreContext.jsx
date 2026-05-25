@@ -730,7 +730,7 @@ const crearVendedor = async (nombre, zona, email, password) => {
   const { data: { session: previousSession } } = await supabase.auth.getSession();
 
   try {
-    // 1. Verificar si ya existe
+    // 1. Verificar si ya existe usuario con ese email
     const { data: usuarioExistente, error: errorUsuarioExistente } =
       await supabase
         .from("usuarios")
@@ -747,7 +747,7 @@ const crearVendedor = async (nombre, zona, email, password) => {
       return { error: "Ya existe un usuario con ese email" };
     }
 
-    // 2. Crear usuario en Supabase Auth (genera UUID)
+    // 2. Crear usuario en Supabase Auth
     const { data: authData, error: authError } =
       await supabase.auth.signUp({
         email,
@@ -765,7 +765,7 @@ const crearVendedor = async (nombre, zona, email, password) => {
 
     const userId = authData.user.id;
 
-    // 3. Insertar en tabla usuarios
+    // 3. Insertar en tabla usuarios con rol "vendedor"
     const { data: usuarioData, error: errorUsuario } =
       await supabase
         .from("usuarios")
@@ -784,7 +784,6 @@ const crearVendedor = async (nombre, zona, email, password) => {
     if (errorUsuario) {
       console.error("Error creando usuario vendedor:", errorUsuario);
 
-      // rollback opcional
       await supabase.auth.admin.deleteUser(userId);
 
       if (previousSession) {
@@ -800,8 +799,8 @@ const crearVendedor = async (nombre, zona, email, password) => {
       return { error: errorUsuario.message };
     }
 
-    // 4. Insertar en tabla vendedores (conectado por usuario_id)
-    let vendedorData = null;
+    // 4. Insertar en vendedores si existe
+    let vendedorData = usuarioData;
     if (tablaVendedoresExiste) {
       const { data: vendedorInsertado, error: errorVendedor } =
         await supabase
@@ -829,26 +828,13 @@ const crearVendedor = async (nombre, zona, email, password) => {
         }
       } else {
         vendedorData = vendedorInsertado;
-        setVendedores((prev) => [...prev, vendedorData]);
+        setVendedores((prev) => [...prev, vendedorInsertado]);
       }
     }
 
-    if (!vendedorData) {
-      vendedorData = {
-        id: userId,
-        usuario_id: userId,
-        nombre,
-        email,
-        zona,
-        estado: "Activo",
-      };
-    }
-
-    // 5. Actualizar estado local de usuarios vendedores
-    setUsuariosVendedores((prev) => [
-      ...prev,
-      { id: userId, nombre, email, zona, rol: "vendedor" },
-    ]);
+    // 5. Sincronizar estado local con la base de datos
+    await cargarUsuariosVendedores();
+    await cargarVendedores();
 
     if (previousSession) {
       const { error: restoreError } = await supabase.auth.setSession({
@@ -864,7 +850,6 @@ const crearVendedor = async (nombre, zona, email, password) => {
       success: true,
       vendedor: vendedorData,
     };
-
   } catch (err) {
     console.error(err);
     return { error: err.message };
