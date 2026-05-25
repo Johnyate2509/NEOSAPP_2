@@ -442,8 +442,14 @@
   color: #666;
 }
 
-.producto-stock.sinstock {
+.producto-stock.sinstock,
+.producto-stock.bajostock {
   color: #c0392b;
+  font-weight: 600;
+}
+
+.producto-stock.disponible {
+  color: #10b981;
   font-weight: 600;
 }
 
@@ -1236,11 +1242,13 @@
   font-weight: 600;
 }
 
-.stock-info.constock {
+.stock-info.constock,
+.stock-info.disponible {
   color: #10b981;
 }
 
-.stock-info.sinstock {
+.stock-info.sinstock,
+.stock-info.bajostock {
   color: #c0392b;
 }
 

@@ -42,6 +42,62 @@ export default function Producto() {
       new Set(productos.map((producto) => obtenerCategoriaProducto(producto)))
     ).filter(Boolean);
   }, [categorias, productos]);
+
+  const obtenerTextoStockCliente = (stock) => {
+    const cantidad = Number(stock || 0);
+
+    if (cantidad <= 0) {
+      return "Sin stock";
+    }
+
+    if (cantidad < 5) {
+      return "Quedan pocas unidades";
+    }
+
+    return "Disponible";
+  };
+
+  const obtenerClaseStockCliente = (stock) => {
+    const cantidad = Number(stock || 0);
+
+    if (cantidad <= 0) {
+      return "sinstock";
+    }
+
+    if (cantidad < 5) {
+      return "bajostock";
+    }
+
+    return "disponible";
+  };
+
+  const obtenerTextoStockAdmin = (stock) => {
+    const cantidad = Number(stock || 0);
+
+    if (cantidad <= 0) {
+      return "Sin stock";
+    }
+
+    if (cantidad < 5) {
+      return "Quedan pocas unidades";
+    }
+
+    return `Stock: ${cantidad}`;
+  };
+
+  const obtenerClaseStockAdmin = (stock) => {
+    const cantidad = Number(stock || 0);
+
+    if (cantidad <= 0) {
+      return "sinstock";
+    }
+
+    if (cantidad < 5) {
+      return "bajostock";
+    }
+
+    return "constock";
+  };
   
   // Referencias para los scrolls horizontales
   const scrollRefs = useRef({});
@@ -693,9 +749,17 @@ const obtenerProductosFiltrados = (categoria) => {
                         <span className="producto-precio">
                           ${p.precio.toLocaleString()}
                         </span>
-                        <span className={`producto-stock ${p.stock <= 0 ? "sinstock" : ""}`}>
-                          Stock: {p.stock}
-                        </span>
+                        {esAdmin() ? (
+                          <span className={`producto-stock ${obtenerClaseStockAdmin(p.stock)}`}>
+                            {obtenerTextoStockAdmin(p.stock)}
+                          </span>
+                        ) : (
+                          obtenerTextoStockCliente(p.stock) && (
+                            <span className={`producto-stock ${obtenerClaseStockCliente(p.stock)}`}>
+                              {obtenerTextoStockCliente(p.stock)}
+                            </span>
+                          )
+                        )}
                       </div>
 
                       <div className="producto-acciones">
@@ -786,9 +850,17 @@ const obtenerProductosFiltrados = (categoria) => {
                           <span className="producto-precio">
                             ${p.precio.toLocaleString()}
                           </span>
-                          <span className={`producto-stock ${p.stock <= 0 ? "sinstock" : ""}`}>
-                            Stock: {p.stock}
-                          </span>
+                          {esAdmin() ? (
+                            <span className={`producto-stock ${obtenerClaseStockAdmin(p.stock)}`}>
+                              {obtenerTextoStockAdmin(p.stock)}
+                            </span>
+                          ) : (
+                            obtenerTextoStockCliente(p.stock) && (
+                              <span className={`producto-stock ${obtenerClaseStockCliente(p.stock)}`}>
+                                {obtenerTextoStockCliente(p.stock)}
+                              </span>
+                            )
+                          )}
                         </div>
 
                         <div className="producto-acciones">
@@ -1106,11 +1178,17 @@ const obtenerProductosFiltrados = (categoria) => {
                   <div className="precio-grande">
                     ${productoDetalles.precio.toLocaleString()}
                   </div>
-                  <div className={`stock-info ${productoDetalles.stock <= 0 ? "sinstock" : "constock"}`}>
-                    {productoDetalles.stock <= 0 
-                      ? "❌ Sin stock" 
-                      : `✓ ${productoDetalles.stock} disponibles`}
-                  </div>
+                  {esAdmin() ? (
+                    <div className={`stock-info ${obtenerClaseStockAdmin(productoDetalles.stock)}`}>
+                      {obtenerTextoStockAdmin(productoDetalles.stock)}
+                    </div>
+                  ) : (
+                    obtenerTextoStockCliente(productoDetalles.stock) && (
+                      <div className={`stock-info ${obtenerClaseStockCliente(productoDetalles.stock)}`}>
+                        {obtenerTextoStockCliente(productoDetalles.stock)}
+                      </div>
+                    )
+                  )}
                 </div>
 
                 <div className="detalles-acciones">

@@ -144,25 +144,6 @@ export default function Pedidos() {
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-  const parseFechaPedido = (fecha) => {
-    if (!fecha) return NaN;
-    const fechaTexto = String(fecha).trim();
-
-    const isoMatch = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-      return new Date(fechaTexto).getTime();
-    }
-
-    const dmyMatch = fechaTexto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (dmyMatch) {
-      const [, dia, mes, año] = dmyMatch;
-      return new Date(Number(año), Number(mes) - 1, Number(dia)).getTime();
-    }
-
-    const parsed = Date.parse(fechaTexto);
-    return Number.isNaN(parsed) ? NaN : parsed;
-  };
-
   const pedidosFiltrados = pedidos
     .filter((p) => {
       const cliente = (p?.cliente ?? "").toLowerCase();
@@ -177,19 +158,7 @@ export default function Pedidos() {
         id.includes(normalizedSearchTerm)
       );
     })
-    .sort((a, b) => {
-      const fechaA = a.fechaEntrega || a.fecha || "";
-      const fechaB = b.fechaEntrega || b.fecha || "";
-      const fechaDateA = parseFechaPedido(fechaA);
-      const fechaDateB = parseFechaPedido(fechaB);
-
-      if (!Number.isNaN(fechaDateA) && !Number.isNaN(fechaDateB)) {
-        return fechaDateA - fechaDateB;
-      }
-      if (!Number.isNaN(fechaDateA)) return -1;
-      if (!Number.isNaN(fechaDateB)) return 1;
-      return Number(b.id) - Number(a.id);
-    });
+    .sort((a, b) => Number(b.id) - Number(a.id));
 
   return (
     <div className="pedidos-page">
