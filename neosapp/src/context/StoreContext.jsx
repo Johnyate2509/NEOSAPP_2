@@ -488,7 +488,7 @@ const cargarProductos = async () => {
     return true;
   };
 
-  const crearPedido = async (cedula, nombre, direccion, carrito, formaPago, emailCliente = "", telefonoCliente = "") => {
+  const crearPedido = async (cedula, nombre, direccion, carrito, formaPago, emailCliente = "", telefonoCliente = "", clienteIdManual = null) => {
     // Validar datos básicos
     if (!cedula || !nombre || !direccion || !carrito?.length) {
       return { error: "Cédula, nombre, dirección y carrito son requeridos" };
@@ -529,7 +529,7 @@ const cargarProductos = async () => {
       forma_pago: formaPago,
       estado: "Pendiente",
       total,
-      cliente_id: clienteEncontrado?.id || null,
+      cliente_id: clienteIdManual || clienteEncontrado?.id || null,
     };
 
     try {

@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo } from "react";
 import { useStore } from "../context/StoreContext";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../context/supabaseClient";
+import { validarDatosPedido, validarCarrito } from "../utils/validaciones";
 import "./producto.css";
 import brebImage from "../components/img/breb.jpg";
 
@@ -21,7 +23,7 @@ const CATEGORIAS_POR_DEFECTO = [
 const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
-  const { productos, categorias, setProductos, crearProducto, actualizarProducto, crearPedido, crearCliente, clientes } = useStore();
+  const { productos, categorias, setProductos, crearProducto, actualizarProducto, clientes } = useStore();
   const { esAdmin, esVendedor, obtenerDatosUsuario } = useAuth();
   const vendedorData = obtenerDatosUsuario();
 
@@ -83,12 +85,14 @@ export default function Producto() {
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
+  const [erroresValidacion, setErroresValidacion] = useState([]);
   const [datosCliente, setDatosCliente] = useState({
     cedula: "",
     nombre: "",
     direccion: "",
     correoElectronico: "",
     numeroCelular: "",
+    password: "",
     formaPago: FORMAS_PAGO[0],
   });
 //
@@ -408,54 +412,146 @@ const obtenerProductosFiltrados = (categoria) => {
   };
 
   const finalizarPedido = async () => {
-    if (!datosCliente.cedula || !datosCliente.nombre || !datosCliente.direccion || !datosCliente.correoElectronico || !datosCliente.numeroCelular || carrito.length === 0) {
-      alert("Por favor completa todos los datos (Cédula, Nombre, Dirección, correo y teléfono) y agrega productos");
-      return;
-    }
+    setErroresValidacion([]);
 
-    // 1) Crear o asegurar cliente en la BD (seguirá la lógica de crearCliente con Auth si hay email)
-    const resultadoCliente = await crearCliente(
-      datosCliente.nombre,
-      datosCliente.cedula,
-      datosCliente.direccion,
-      datosCliente.numeroCelular,
-      datosCliente.correoElectronico,
-      null
-    );
+    const correo = datosCliente.correoElectronico.trim();
+    const nombre = datosCliente.nombre.trim();
+    const direccion = datosCliente.direccion.trim();
+    const telefono = datosCliente.numeroCelular.trim();
+    const total = calcularTotal();
 
-    if (resultadoCliente?.error) {
-      alert("Error creando cliente: " + resultadoCliente.error);
-      return;
-    }
-
-    // 2) Crear pedido, pasando email y teléfono para envío de confirmación
-    const resultadoPedido = await crearPedido(
-      datosCliente.cedula,
-      datosCliente.nombre,
-      datosCliente.direccion,
+    const datosPedido = {
+      cedula: datosCliente.cedula,
+      nombre,
+      direccion,
+      email: correo,
+      telefono,
+      password: datosCliente.password,
+      formaPago: datosCliente.formaPago,
       carrito,
-      datosCliente.formaPago,
-      datosCliente.correoElectronico,
-      datosCliente.numeroCelular
-    );
+    };
 
-    if (resultadoPedido?.error) {
-      alert("Error creando pedido: " + resultadoPedido.error);
+    const validacionPedido = validarDatosPedido(datosPedido);
+    if (!validacionPedido.valido) {
+      setErroresValidacion(validacionPedido.errores);
       return;
     }
 
-    setCarrito([]);
-    setDatosCliente({
-      cedula: "",
-      nombre: "",
-      direccion: "",
-      correoElectronico: "",
-      numeroCelular: "",
-      password_hash: "",
-      formaPago: FORMAS_PAGO[0],
-    });
-    setMostrarModalPedido(false);
-    alert("Pedido creado exitosamente");
+    const validacionCarrito = validarCarrito(carrito);
+    if (!validacionCarrito.valido) {
+      setErroresValidacion(validacionCarrito.errores);
+      return;
+    }
+
+    try {
+      let { data: clienteExistente, error: errorClienteExistente } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("correo", correo)
+        .maybeSingle();
+
+      if (errorClienteExistente) {
+        throw errorClienteExistente;
+      }
+
+      let clienteId;
+
+      if (!clienteExistente) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: correo,
+          password: datosCliente.password || "Temporal123!",
+        });
+
+        if (authError) {
+          throw authError;
+        }
+
+        const userId = authData?.user?.id;
+        if (!userId) {
+          throw new Error("No se pudo obtener el ID del usuario creado en Auth");
+        }
+
+        const { error: errorUsuario } = await supabase.from("usuarios").insert({
+          id: userId,
+          nombre,
+          cedula: datosCliente.cedula,
+          email: correo,
+          rol: "cliente",
+        });
+
+        if (errorUsuario) {
+          throw errorUsuario;
+        }
+
+        const { data: clienteNuevo, error: errorCrearCliente } = await supabase
+          .from("clientes")
+          .insert({
+            usuario_id: userId,
+            nombre,
+            cedula: datosCliente.cedula,
+            direccion,
+            telefono,
+            correo,
+          })
+          .select()
+          .single();
+
+        if (errorCrearCliente) {
+          throw errorCrearCliente;
+        }
+
+        clienteId = clienteNuevo.id;
+      } else {
+        clienteId = clienteExistente.id;
+      }
+
+      const { data: pedido, error: pedidoError } = await supabase
+        .from("pedidos")
+        .insert({
+          cliente_id: clienteId,
+          forma_pago: datosCliente.formaPago,
+          estado: "Pendiente",
+          total,
+        })
+        .select()
+        .single();
+
+      if (pedidoError) {
+        throw pedidoError;
+      }
+
+      for (const item of carrito) {
+        const { error: errorDetalle } = await supabase.from("pedido_detalle").insert({
+          pedido_id: pedido.id,
+          producto_id: item.id,
+          cantidad: item.cantidad,
+          precio: item.precio,
+        });
+
+        if (errorDetalle) {
+          throw errorDetalle;
+        }
+      }
+
+      setCarrito([]);
+      setDatosCliente({
+        cedula: "",
+        nombre: "",
+        direccion: "",
+        correoElectronico: "",
+        numeroCelular: "",
+        password: "",
+        formaPago: FORMAS_PAGO[0],
+      });
+      setClienteSeleccionado(null);
+      setBusquedaCliente("");
+      setMostrarModalPedido(false);
+      setErroresValidacion([]);
+      alert("Compra registrada correctamente");
+    } catch (error) {
+      console.error(error);
+      setErroresValidacion([error?.message || "Error registrando la compra"]);
+    }
   };
 
   return (
@@ -1110,6 +1206,17 @@ const obtenerProductosFiltrados = (categoria) => {
 
             <div className="formulario-cliente">
               <h4>Datos del cliente:</h4>
+
+              {erroresValidacion.length > 0 && (
+                <div className="errores-validacion">
+                  <h5>⚠️ Corrige los siguientes datos:</h5>
+                  <ul>
+                    {erroresValidacion.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               
               {(esAdmin() || esVendedor()) ? (
                 <div className="busqueda-cliente">
@@ -1208,6 +1315,15 @@ const obtenerProductosFiltrados = (categoria) => {
                     value={datosCliente.numeroCelular}
                     onChange={(e) =>
                       setDatosCliente({ ...datosCliente, numeroCelular: e.target.value })
+                    }
+                  />
+
+                  <input
+                    type="password"
+                    placeholder="Contraseña para el cliente"
+                    value={datosCliente.password}
+                    onChange={(e) =>
+                      setDatosCliente({ ...datosCliente, password: e.target.value })
                     }
                   />
                 </>
