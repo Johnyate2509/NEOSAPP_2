@@ -36,22 +36,35 @@ const adaptarProducto = (p) => ({
     : [DEFAULT_IMAGE],
 });
 
-  const adaptarPedido = (p, items = []) => ({
+  const adaptarPedido = (p, items = [], clientesData = []) => {
+    const clienteId =
+      p.cliente_id ??
+      p.clienteId ??
+      p.cliente_id ??
+      p.cliente?.id ??
+      null;
 
-    id: p.id,
-    cliente: p.nombre ?? p.cliente,
-    clienteCedula: p.cedula,
-    direccion: p.direccion,
-    fecha:
-      p.fecha ||
-      (p.created_at ? new Date(p.created_at).toLocaleDateString("es-CO") : ""),
-    formaPago: p.forma_pago ?? p.formaPago ?? "",
-    items,
-    total: p.total ?? p.totalPedido ?? 0,
-    estado: p.estado ?? "Pendiente",
-    repartidor_id: p.repartidor_id ?? null,
-    repartidor: p.repartidor ?? "",
-  });
+    const clienteInfo = clienteId
+      ? (clientesData || clientes).find((c) => String(c.id) === String(clienteId))
+      : null;
+
+    return {
+      id: p.id,
+      cliente: clienteInfo?.nombre || p.nombre || p.cliente || "",
+      clienteCedula: p.cedula,
+      cliente_id: clienteId,
+      direccion: p.direccion,
+      fecha:
+        p.fecha ||
+        (p.created_at ? new Date(p.created_at).toLocaleDateString("es-CO") : ""),
+      formaPago: p.forma_pago ?? p.formaPago ?? "",
+      items,
+      total: p.total ?? p.totalPedido ?? 0,
+      estado: p.estado ?? "Pendiente",
+      repartidor_id: p.repartidor_id ?? null,
+      repartidor: p.repartidor ?? "",
+    };
+  };
 
 const cargarProductos = async () => {
   const { data, error } = await supabase.from("productos").select("*");
@@ -75,86 +88,87 @@ const cargarProductos = async () => {
 
     console.log("Clientes cargados desde Supabase (clientes):", data);
 
-    setClientes(
-      (data || []).map((cliente) => {
-        const clienteId =
-          cliente.id ??
-          cliente.cliente_id ??
-          cliente.Cliente_id ??
-          cliente.clienteId ??
-          cliente.Usuario_id ??
+    const adaptados = (data || []).map((cliente) => {
+      const clienteId =
+        cliente.id ??
+        cliente.cliente_id ??
+        cliente.Cliente_id ??
+        cliente.clienteId ??
+        cliente.Usuario_id ??
+        cliente.usuario_id ??
+        cliente.usuarioId ??
+        cliente.user_id ??
+        cliente.userId ??
+        null;
+
+      return {
+        ...cliente,
+        id: clienteId,
+        cedula:
+          cliente.cedula ??
+          cliente.cedula_cliente ??
+          cliente.Cedula ??
+          cliente.CI ??
+          cliente.ci ??
+          "",
+        nombre:
+          cliente.nombre ??
+          cliente.Nombre ??
+          cliente.name ??
+          cliente.nombre_cliente ??
+          "Cliente",
+        direccion:
+          cliente.direccion ??
+          cliente.dirección ??
+          cliente.Direccion ??
+          cliente.dirección_cliente ??
+          cliente.address ??
+          "",
+        telefono:
+          cliente.telefono ??
+          cliente.telefono_cliente ??
+          cliente.Telefono ??
+          cliente.phone ??
+          "",
+        correo:
+          cliente.correo ??
+          cliente.email ??
+          cliente.Email ??
+          cliente.correo_cliente ??
+          "",
+        saldo: cliente.saldo ?? cliente.balance ?? 0,
+        transacciones: cliente.transacciones ?? cliente.transactions ?? [],
+        vendedor_id:
+          cliente.vendedor_id ??
+          cliente.vendedor_usuario_id ??
+          cliente["vendedor id"] ??
+          cliente.vendedorId ??
+          cliente.Vendedor_id ??
+          cliente.vendedor ??
+          null,
+        vendedor_usuario_id:
+          cliente.vendedor_usuario_id ??
+          cliente.vendedor_id ??
+          cliente["vendedor id"] ??
+          cliente.vendedorId ??
+          cliente.Vendedor_id ??
+          cliente.vendedor ??
+          null,
+        usuario_id:
           cliente.usuario_id ??
+          cliente.Usuario_id ??
           cliente.usuarioId ??
           cliente.user_id ??
           cliente.userId ??
-          null;
+          null,
+      };
+    });
 
-        return {
-          ...cliente,
-          id: clienteId,
-          cedula:
-            cliente.cedula ??
-            cliente.cedula_cliente ??
-            cliente.Cedula ??
-            cliente.CI ??
-            cliente.ci ??
-            "",
-          nombre:
-            cliente.nombre ??
-            cliente.Nombre ??
-            cliente.name ??
-            cliente.nombre_cliente ??
-            "Cliente",
-          direccion:
-            cliente.direccion ??
-            cliente.dirección ??
-            cliente.Direccion ??
-            cliente.dirección_cliente ??
-            cliente.address ??
-            "",
-          telefono:
-            cliente.telefono ??
-            cliente.telefono_cliente ??
-            cliente.Telefono ??
-            cliente.phone ??
-            "",
-          correo:
-            cliente.correo ??
-            cliente.email ??
-            cliente.Email ??
-            cliente.correo_cliente ??
-            "",
-          saldo: cliente.saldo ?? cliente.balance ?? 0,
-          transacciones: cliente.transacciones ?? cliente.transactions ?? [],
-          vendedor_id:
-            cliente.vendedor_id ??
-            cliente.vendedor_usuario_id ??
-            cliente["vendedor id"] ??
-            cliente.vendedorId ??
-            cliente.Vendedor_id ??
-            cliente.vendedor ??
-            null,
-          vendedor_usuario_id:
-            cliente.vendedor_usuario_id ??
-            cliente.vendedor_id ??
-            cliente["vendedor id"] ??
-            cliente.vendedorId ??
-            cliente.Vendedor_id ??
-            cliente.vendedor ??
-            null,
-          usuario_id:
-            cliente.usuario_id ??
-            cliente.Usuario_id ??
-            cliente.usuarioId ??
-            cliente.user_id ??
-            cliente.userId ??
-            null,
-        };
-      })
-    );
+    setClientes(adaptados);
+    return adaptados;
   };
 
-  const cargarPedidos = async (productosCargados = []) => {
+  const cargarPedidos = async (productosCargados = [], clientesCargados = []) => {
     const { data, error } = await supabase.from("pedidos").select("*");
     if (error) {
       console.error("Error cargando pedidos:", error);
@@ -216,7 +230,10 @@ const cargarProductos = async () => {
       pedidosData.map((pedido) =>
         adaptarPedido(
           pedido,
-          detallesPorPedido[pedido.id] || pedido.items || []
+          detallesPorPedido[pedido.id] || pedido.items || [],
+          Array.isArray(clientesCargados) && clientesCargados.length > 0
+            ? clientesCargados
+            : clientes
         )
       )
     );
@@ -316,9 +333,9 @@ const cargarProductos = async () => {
   useEffect(() => {
     const cargarDatos = async () => {
       const productosCargados = await cargarProductos();
+      const clientesCargados = await cargarClientes();
       await Promise.all([
-        cargarClientes(),
-        cargarPedidos(productosCargados),
+        cargarPedidos(productosCargados, clientesCargados),
         cargarRepartidores(),
         cargarVendedores(),
         cargarUsuariosVendedores(),

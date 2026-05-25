@@ -4,6 +4,8 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -14,12 +16,14 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend
 );
 
-export default function VendedoresChart({ pedidos, vendedores, onActualizarTope }) {
+export default function VendedoresChart({ pedidos, clientes, vendedores, onActualizarTope }) {
   const [topesVentas, setTopesVentas] = useState(
     vendedores.reduce((acc, vendedor) => {
       acc[vendedor.id] = vendedor.topeVentas || 0;
@@ -30,17 +34,25 @@ export default function VendedoresChart({ pedidos, vendedores, onActualizarTope 
   // Calcular ventas totales por vendedor
   const calcularVentasPorVendedor = () => {
     return vendedores.map(vendedor => {
-      const pedidosVendedor = pedidos.filter(p =>
-        p.vendedorId === vendedor.id && p.estado !== 'Cancelado'
+      const clientesVendedor = (clientes || []).filter(
+        (cliente) => String(cliente.vendedor_id) === String(vendedor.id)
       );
 
-      const totalVentas = pedidosVendedor.reduce((sum, pedido) => sum + pedido.total, 0);
+      const cedulasClientes = clientesVendedor.map((cliente) => String(cliente.cedula));
+
+      const pedidosVendedor = pedidos.filter((p) =>
+        cedulasClientes.includes(String(p.clienteCedula)) && p.estado !== 'Cancelado'
+      );
+
+      const totalVentas = pedidosVendedor.reduce((sum, pedido) => sum + Number(pedido.total || 0), 0);
 
       return {
         nombre: vendedor.nombre,
         ventas: totalVentas,
         tope: topesVentas[vendedor.id] || 0,
-        zona: vendedor.zona
+        zona: vendedor.zona,
+        clientesCount: clientesVendedor.length,
+        pedidosCount: pedidosVendedor.length,
       };
     });
   };
@@ -215,6 +227,7 @@ export default function VendedoresChart({ pedidos, vendedores, onActualizarTope 
         }}>
           {vendedores.map(vendedor => {
             const ventasActuales = datosVentas.find(d => d.nombre === vendedor.nombre)?.ventas || 0;
+            const pedidosActuales = datosVentas.find(d => d.nombre === vendedor.nombre)?.pedidosCount || 0;
             const topeActual = topesVentas[vendedor.id] || 0;
             const porcentaje = topeActual > 0 ? ((ventasActuales / topeActual) * 100).toFixed(1) : 0;
             const alcanzado = ventasActuales >= topeActual && topeActual > 0;
@@ -280,6 +293,7 @@ export default function VendedoresChart({ pedidos, vendedores, onActualizarTope 
                   fontSize: '12px',
                   color: '#aaa'
                 }}>
+                  <span>Pedidos: {String(pedidosActuales)}</span>
                   <span>Actual: ${ventasActuales.toLocaleString()}</span>
                   <span>Tope: ${topeActual.toLocaleString()}</span>
                 </div>

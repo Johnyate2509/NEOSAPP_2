@@ -43,9 +43,19 @@ export default function RepartidoresChart({ pedidos, repartidores }) {
       return {
         label: estado,
         data: repartidores.map(repartidor => {
-          return pedidos.filter(p =>
-            p.repartidor === repartidor.nombre && p.estado === estado
-          ).length;
+          const repartidorId = String(repartidor.id);
+
+          return pedidos.filter((p) => {
+            const pedidoRepartidorId =
+              p.repartidor_id != null ? String(p.repartidor_id) : null;
+            const pedidoRepartidorNombre = String(p.repartidor || "");
+
+            return (
+              p.estado === estado &&
+              (pedidoRepartidorId === repartidorId ||
+                pedidoRepartidorNombre === repartidor.nombre)
+            );
+          }).length;
         }),
         backgroundColor: colores[index],
         borderColor: coloresHover[index],

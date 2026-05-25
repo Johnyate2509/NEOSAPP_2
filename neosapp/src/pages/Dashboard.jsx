@@ -3,9 +3,11 @@ import { useStore } from "../context/StoreContext";
 import { useAuth } from "../context/AuthContext";
 import Producto from "./Producto";
 import RepartidoresChart from "../components/RepartidoresChart";
+import VendedoresChart from "../components/VendedoresChart";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 export default function Dashboard() {
-  const { pedidos, repartidores, productos, clientes, vendedores, obtenerClientesPorVendedor, calcularVentasPorVendedor } = useStore();
+  const { pedidos, repartidores, productos, clientes, vendedores, vendedoresConUsuarios, obtenerClientesPorVendedor, calcularVentasPorVendedor } = useStore();
   const { esAdmin, obtenerUsuario } = useAuth();
   const esAdministrador = esAdmin();
   const usuarioActual = obtenerUsuario();
@@ -43,13 +45,41 @@ export default function Dashboard() {
     (p) => p.estado === "Retraso" || p.estado === "Cancelado"
   ).length;
 
-  const pedidosRecientes = pedidos.slice(-3).reverse();
+  const pedidosRecientes = [...pedidos]
+    .sort((a, b) => Number(b.id) - Number(a.id))
+    .slice(0, 3);
 
   const repartidoresActivos = repartidores?.filter(
     (r) => r.estado === "activo"
   ).length || 0;
 
-  const vendedorStats = (vendedores || []).map((vendedor) => {
+  const getRepartidorNombre = (pedido) => {
+    if (pedido.repartidor) return pedido.repartidor;
+    if (pedido.repartidor_id) {
+      const repartidor = repartidores.find(
+        (r) => String(r.id) === String(pedido.repartidor_id)
+      );
+      return repartidor?.nombre || String(pedido.repartidor_id);
+    }
+    return "";
+  };
+
+  const getClienteNombre = (pedido) => {
+    if (pedido.cliente) return pedido.cliente;
+    if (pedido.clienteCedula) {
+      const cliente = clientes.find(
+        (c) => String(c.cedula) === String(pedido.clienteCedula)
+      );
+      return cliente?.nombre || pedido.clienteCedula;
+    }
+    return "";
+  };
+
+  const vendedoresLista = (vendedoresConUsuarios && vendedoresConUsuarios.length > 0)
+    ? vendedoresConUsuarios
+    : vendedores;
+
+  const vendedorStats = (vendedoresLista || []).map((vendedor) => {
     const clientesVendedor = obtenerClientesPorVendedor(vendedor.id);
     const ventasTotales = calcularVentasPorVendedor(vendedor.id);
     const pedidosCount = pedidos.filter((pedido) =>
@@ -66,6 +96,7 @@ export default function Dashboard() {
   });
 
   return (
+    <ErrorBoundary>
     <div className="dashboard">
 
       {/* KPIs */}
@@ -94,13 +125,13 @@ export default function Dashboard() {
             {pedidosRecientes.map((p) => (
               <tr key={p.id}>
                 <td>#{p.id}</td>
-                <td>{p.cliente}</td>
+                <td>{getClienteNombre(p) || "—"}</td>
                 <td>
                   <span className={`badge ${getBadge(p.estado)}`}>
                     {p.estado}
                   </span>
                 </td>
-                <td>{p.repartidor || "—"}</td>
+                <td>{getRepartidorNombre(p) || "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -112,6 +143,11 @@ export default function Dashboard() {
       <div className="card">
         <h3>Estadísticas de Repartidores</h3>
         <RepartidoresChart pedidos={pedidos} repartidores={repartidores || []} />
+      </div>
+
+      <div className="card">
+        <h3>Ventas por Vendedor</h3>
+        <VendedoresChart pedidos={pedidos} clientes={clientes} vendedores={vendedoresLista || []} />
       </div>
 
       {/* Tabla de estadísticas de vendedores */}
@@ -140,6 +176,7 @@ export default function Dashboard() {
       </div>
 
     </div>
+    </ErrorBoundary>
   );
 }
 
