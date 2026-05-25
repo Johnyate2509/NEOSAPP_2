@@ -590,6 +590,242 @@
   }
 }
 
+/* ====================================
+   PESTAÑAS
+   ==================================== */
+
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #1e40af;
+  background: #f9fafb;
+}
+
+.tab-button.activa {
+  color: #1e40af;
+  border-bottom-color: #1e40af;
+}
+
+/* ====================================
+   TABLA DE PEDIDOS
+   ==================================== */
+
+.seccion-pedidos-tabla {
+  width: 100%;
+}
+
+.sin-pedidos-mensaje {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  color: #999;
+}
+
+.sin-pedidos-mensaje p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.pedidos-tabla-container {
+  display: none;
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.pedidos-tabla-container.show {
+  display: block;
+}
+
+.pedidos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.pedidos-tabla thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.pedidos-tabla th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pedidos-tabla tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s ease;
+}
+
+.pedidos-tabla tbody tr:hover {
+  background: #f9fafb;
+}
+
+.pedidos-tabla td {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #333;
+}
+
+.pedidos-tabla .estado-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pedidos-tabla .estado-badge.estado-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pedidos-tabla .estado-badge.estado-en-camino {
+  background: #dbeafe;
+  color: #0c4a6e;
+}
+
+.pedidos-tabla .estado-badge.estado-entregado {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pedidos-tabla .estado-badge.estado-cancelado {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+/* TARJETAS DE PEDIDOS PARA MÓVIL */
+.pedidos-cards-container {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.pedido-card-mini {
+  background: white;
+  border-radius: 8px;
+  border-left: 4px solid #d1d5db;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.pedido-card-mini:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pedido-card-mini.pendiente {
+  border-left-color: #f59e0b;
+}
+
+.pedido-card-mini.en-camino {
+  border-left-color: #3b82f6;
+}
+
+.pedido-card-mini.entregado {
+  border-left-color: #10b981;
+}
+
+.pedido-card-mini.cancelado {
+  border-left-color: #ef4444;
+}
+
+.pedido-card-header-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pedido-card-header-mini h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.pedido-card-body-mini {
+  padding: 12px 16px;
+}
+
+.pedido-card-body-mini p {
+  margin: 8px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.pedido-card-body-mini p strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* ====================================
+   RESPONSIVE - TABLA
+   ==================================== */
+
+@media (max-width: 768px) {
+  .pedidos-tabla-container {
+    display: none !important;
+  }
+
+  .tab-button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .tabs-container {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .pedidos-cards-container {
+    display: none;
+  }
+
+  .pedidos-tabla-container.show {
+    display: block;
+  }
+
+  .pedidos-tabla-container {
+    display: block;
+  }
+}
+
 @media (max-width: 480px) {
   .clientes-page {
     padding: 12px;
@@ -624,5 +860,27 @@
   .btn-actualizar,
   .btn-pago {
     padding: 10px;
+  }
+
+  .tabs-container {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tab-button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .pedido-card-header-mini h4 {
+    font-size: 13px;
+  }
+
+  .pedido-card-body-mini p {
+    font-size: 12px;
+  }
+
+  .estado-badge {
+    font-size: 10px;
   }
 }

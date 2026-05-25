@@ -6,6 +6,7 @@ export default function Sidebar() {
   const esAdministrador = esAdmin();
   const esVend = esVendedor();
   const esRepar = esRepartidor();
+  const esCliente = !esAdministrador && !esVend && !esRepar;
 
   return (
     <aside className="sidebar">
@@ -21,6 +22,13 @@ export default function Sidebar() {
         {esAdministrador && (
           <NavLink to="/clientes">
              Clientes
+          </NavLink>
+        )}
+
+        {/* Pedidos - para cliente */}
+        {esCliente && (
+          <NavLink to="/mis-pedidos">
+             📦 Mis Pedidos
           </NavLink>
         )}
 

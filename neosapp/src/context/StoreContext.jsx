@@ -105,17 +105,8 @@ const cargarProductos = async () => {
     console.log("Clientes cargados desde Supabase (clientes):", data);
 
     const adaptados = (data || []).map((cliente) => {
-      const clienteId =
-        cliente.id ??
-        cliente.cliente_id ??
-        cliente.Cliente_id ??
-        cliente.clienteId ??
-        cliente.Usuario_id ??
-        cliente.usuario_id ??
-        cliente.usuarioId ??
-        cliente.user_id ??
-        cliente.userId ??
-        null;
+      // El ID del cliente es su ID único en la tabla clientes
+      const clienteId = cliente.id ?? null;
 
       return {
         ...cliente,
@@ -170,6 +161,7 @@ const cargarProductos = async () => {
           cliente.Vendedor_id ??
           cliente.vendedor ??
           null,
+        // usuario_id es la llave que relaciona con la tabla usuarios
         usuario_id:
           cliente.usuario_id ??
           cliente.Usuario_id ??
@@ -1304,9 +1296,23 @@ const datosCliente = {
     return true;
   };
 
-  const obtenerClienteActual = (usuarioId) => {
-    if (!usuarioId) return null;
-    return clientes.find((c) => String(c.usuario_id) === String(usuarioId)) || null;
+  const obtenerClienteActual = (usuarioId, emailFallback = null) => {
+    if (!usuarioId && !emailFallback) return null;
+    
+    console.log("🔍 Buscando cliente para usuarioId:", usuarioId, "o email:", emailFallback);
+    console.log("📋 Clientes disponibles:", clientes.map(c => ({ id: c.id, usuario_id: c.usuario_id, email: c.correo, nombre: c.nombre })));
+    
+    // Primero intenta buscar por usuario_id
+    let cliente = usuarioId ? clientes.find((c) => String(c.usuario_id) === String(usuarioId)) : null;
+    
+    // Si no encuentra y tiene email, busca por email
+    if (!cliente && emailFallback) {
+      console.log("⚠️ No encontrado por usuario_id, buscando por email:", emailFallback);
+      cliente = clientes.find((c) => c.correo && c.correo.toLowerCase() === emailFallback.toLowerCase());
+    }
+    
+    console.log("✅ Cliente encontrado:", cliente);
+    return cliente || null;
   };
 
   const actualizarClienteNombre = async (clienteId, nombre) => {

@@ -18,6 +18,7 @@ export default function Clientes() {
   const [descripcionPago, setDescripcionPago] = useState("");
   const [telefonoTemporal, setTelefonoTemporal] = useState("");
   const [direccionTemporal, setDireccionTemporal] = useState("");
+  const [pestanaActiva, setPestanaActiva] = useState("informacion");
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const clientesFiltrados = normalizedSearch
@@ -48,6 +49,7 @@ export default function Clientes() {
     if (!clienteSeleccionado) {
       setTelefonoTemporal("");
       setDireccionTemporal("");
+      setPestanaActiva("informacion");
       return;
     }
 
@@ -159,143 +161,213 @@ export default function Clientes() {
               <h3>{clienteSeleccionado.nombre}</h3>
             </div>
 
-            {/* Información del cliente */}
-            <div className="info-cliente">
-              <div className="info-group">
-                <label>Cédula:</label>
-                <p>{clienteSeleccionado.cedula}</p>
-              </div>
-
-              <div className="info-group">
-                <label>Dirección:</label>
-                <p>{clienteSeleccionado.direccion}</p>
-              </div>
-
-              <div className="info-group">
-                <label>Teléfono:</label>
-                <p>{clienteSeleccionado.telefono || "No asignado"}</p>
-              </div>
-
-              <div className="info-group">
-                <label>Saldo actual:</label>
-                <p className={`saldo-grande ${clienteSeleccionado.saldo > 0 ? "debe" : clienteSeleccionado.saldo < 0 ? "favor" : "al-dia"}`}>
-                  {clienteSeleccionado.saldo > 0 ? "$" : clienteSeleccionado.saldo < 0 ? "-$" : "$"}{Math.abs(clienteSeleccionado.saldo).toLocaleString()}
-                </p>
-              </div>
+            {/* Pestañas */}
+            <div className="tabs-container">
+              <button
+                className={`tab-button ${pestanaActiva === "informacion" ? "activa" : ""}`}
+                onClick={() => setPestanaActiva("informacion")}
+              >
+                ℹ️ Información
+              </button>
+              <button
+                className={`tab-button ${pestanaActiva === "pedidos" ? "activa" : ""}`}
+                onClick={() => setPestanaActiva("pedidos")}
+              >
+                📦 Pedidos ({pedidosCliente.length})
+              </button>
+              <button
+                className={`tab-button ${pestanaActiva === "transacciones" ? "activa" : ""}`}
+                onClick={() => setPestanaActiva("transacciones")}
+              >
+                💳 Transacciones
+              </button>
             </div>
 
-            {/* Actualizar teléfono */}
-            <div className="seccion-telefono">
-              <h4>Actualizar teléfono</h4>
-              <div className="input-group">
-                <input
-                  type="tel"
-                  placeholder="Ej: 3001234567"
-                  value={telefonoTemporal}
-                  onChange={(e) => setTelefonoTemporal(e.target.value)}
-                />
-                <button onClick={handleActualizarTelefono} className="btn-actualizar">
-                  Actualizar
-                </button>
-              </div>
-            </div>
+            {/* PESTAÑA: INFORMACIÓN */}
+            {pestanaActiva === "informacion" && (
+              <>
+                {/* Información del cliente */}
+                <div className="info-cliente">
+                  <div className="info-group">
+                    <label>Cédula:</label>
+                    <p>{clienteSeleccionado.cedula}</p>
+                  </div>
 
-            {/* Actualizar dirección */}
-            <div className="seccion-direccion">
-              <h4>Actualizar dirección</h4>
-              <div className="input-group">
-                <input
-                  type="text"
-                  placeholder="Ej: Calle 123 #45-67"
-                  value={direccionTemporal}
-                  onChange={(e) => setDireccionTemporal(e.target.value)}
-                />
-                <button onClick={handleActualizarDireccion} className="btn-actualizar">
-                  Actualizar
-                </button>
-              </div>
-            </div>
+                  <div className="info-group">
+                    <label>Dirección:</label>
+                    <p>{clienteSeleccionado.direccion}</p>
+                  </div>
 
-            {/* Registrar pago */}
-            {clienteSeleccionado && (
-              <div className="seccion-pago">
-                <h4>Registrar Pago/Abono</h4>
-                {clienteSeleccionado.saldo === 0 && (
-                  <p style={{ fontSize: "12px", color: "#666", marginBottom: "12px" }}>
-                    💡 Abono anticipado para próximos pedidos
-                  </p>
-                )}
-                <div className="pago-group">
-                  <input
-                    type="number"
-                    placeholder="Monto del pago"
-                    value={montoPago}
-                    onChange={(e) => setMontoPago(e.target.value)}
-                    min="0"
-                  />
-                  <select
-                    value={metodoPago}
-                    onChange={(e) => setMetodoPago(e.target.value)}
-                  >
-                    <option value="efectivo">Efectivo</option>
-                    <option value="consignacion">Consignación</option>
-                    <option value="credito">Crédito</option>
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Descripción (Ej: Abono anticipado, Consignación)"
-                    value={descripcionPago}
-                    onChange={(e) => setDescripcionPago(e.target.value)}
-                  />
-                  <button onClick={handleRegistrarPago} className="btn-pago">
-                    Registrar
-                  </button>
+                  <div className="info-group">
+                    <label>Teléfono:</label>
+                    <p>{clienteSeleccionado.telefono || "No asignado"}</p>
+                  </div>
+
+                  <div className="info-group">
+                    <label>Saldo actual:</label>
+                    <p className={`saldo-grande ${clienteSeleccionado.saldo > 0 ? "debe" : clienteSeleccionado.saldo < 0 ? "favor" : "al-dia"}`}>
+                      {clienteSeleccionado.saldo > 0 ? "$" : clienteSeleccionado.saldo < 0 ? "-$" : "$"}{Math.abs(clienteSeleccionado.saldo).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Pedidos del cliente */}
-            {pedidosCliente.length > 0 && (
-              <div className="seccion-pedidos">
-                <h4>Pedidos ({pedidosCliente.length})</h4>
-                <div className="pedidos-list">
-                  {pedidosCliente.map((pedido) => (
-                    <div key={pedido.id} className="pedido-mini">
-                      <div className="pedido-mini-header">
-                        <span className="pedido-numero">Pedido #{pedido.id}</span>
-                        <span className={`estado-badge ${pedido.estado.toLowerCase().replace(" ", "-")}`}>
-                          {pedido.estado}
-                        </span>
-                      </div>
-                      <p className="pedido-fecha">{pedido.fecha}</p>
-                      <p className="pedido-monto">${pedido.total.toLocaleString()}</p>
-                    </div>
-                  ))}
+                {/* Actualizar teléfono */}
+                <div className="seccion-telefono">
+                  <h4>Actualizar teléfono</h4>
+                  <div className="input-group">
+                    <input
+                      type="tel"
+                      placeholder="Ej: 3001234567"
+                      value={telefonoTemporal}
+                      onChange={(e) => setTelefonoTemporal(e.target.value)}
+                    />
+                    <button onClick={handleActualizarTelefono} className="btn-actualizar">
+                      Actualizar
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Historial de transacciones */}
-            <div className="seccion-transacciones">
-              <h4>Historial de Transacciones</h4>
-              <div className="transacciones-list">
-                {clienteSeleccionado.transacciones.length > 0 ? (
-                  clienteSeleccionado.transacciones.map((trans) => (
-                    <div key={trans.id} className={`transaccion-item ${trans.tipo}`}>
-                      <div className="trans-info">
-                        <p className="trans-descripcion">{trans.descripcion}</p>
-                        <p className="trans-fecha">{trans.fecha}</p>
-                      </div>
-                      <p className={`trans-monto ${trans.tipo}`}>
-                        {trans.tipo === "pedido" ? "+" : "-"}${trans.monto.toLocaleString()}
+                {/* Actualizar dirección */}
+                <div className="seccion-direccion">
+                  <h4>Actualizar dirección</h4>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      placeholder="Ej: Calle 123 #45-67"
+                      value={direccionTemporal}
+                      onChange={(e) => setDireccionTemporal(e.target.value)}
+                    />
+                    <button onClick={handleActualizarDireccion} className="btn-actualizar">
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Registrar pago */}
+                {clienteSeleccionado && (
+                  <div className="seccion-pago">
+                    <h4>Registrar Pago/Abono</h4>
+                    {clienteSeleccionado.saldo === 0 && (
+                      <p style={{ fontSize: "12px", color: "#666", marginBottom: "12px" }}>
+                        💡 Abono anticipado para próximos pedidos
                       </p>
+                    )}
+                    <div className="pago-group">
+                      <input
+                        type="number"
+                        placeholder="Monto del pago"
+                        value={montoPago}
+                        onChange={(e) => setMontoPago(e.target.value)}
+                        min="0"
+                      />
+                      <select
+                        value={metodoPago}
+                        onChange={(e) => setMetodoPago(e.target.value)}
+                      >
+                        <option value="efectivo">Efectivo</option>
+                        <option value="consignacion">Consignación</option>
+                        <option value="credito">Crédito</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="Descripción (Ej: Abono anticipado, Consignación)"
+                        value={descripcionPago}
+                        onChange={(e) => setDescripcionPago(e.target.value)}
+                      />
+                      <button onClick={handleRegistrarPago} className="btn-pago">
+                        Registrar
+                      </button>
                     </div>
-                  ))
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* PESTAÑA: PEDIDOS */}
+            {pestanaActiva === "pedidos" && (
+              <div className="seccion-pedidos-tabla">
+                {pedidosCliente.length === 0 ? (
+                  <div className="sin-pedidos-mensaje">
+                    <p>Este cliente no tiene pedidos registrados</p>
+                  </div>
                 ) : (
-                  <p className="sin-transacciones">Sin transacciones</p>
+                  <>
+                    <div className="pedidos-tabla-container">
+                      <table className="pedidos-tabla">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Valor</th>
+                            <th>Estado</th>
+                            <th>Repartidor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pedidosCliente.map((pedido) => (
+                            <tr key={pedido.id}>
+                              <td data-label="ID">#{pedido.id}</td>
+                              <td data-label="Fecha">{pedido.fecha}</td>
+                              <td data-label="Valor">${pedido.total?.toLocaleString()}</td>
+                              <td data-label="Estado">
+                                <span className={`estado-badge estado-${pedido.estado?.toLowerCase().replace(" ", "-")}`}>
+                                  {pedido.estado}
+                                </span>
+                              </td>
+                              <td data-label="Repartidor">
+                                {pedido.repartidor || "No asignado"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Tarjetas de pedidos para móvil */}
+                    <div className="pedidos-cards-container">
+                      {pedidosCliente.map((pedido) => (
+                        <div key={pedido.id} className={`pedido-card-mini ${pedido.estado?.toLowerCase().replace(" ", "-")}`}>
+                          <div className="pedido-card-header-mini">
+                            <h4>Pedido #{pedido.id}</h4>
+                            <span className={`estado-badge estado-${pedido.estado?.toLowerCase().replace(" ", "-")}`}>
+                              {pedido.estado}
+                            </span>
+                          </div>
+                          <div className="pedido-card-body-mini">
+                            <p><strong>Fecha:</strong> {pedido.fecha}</p>
+                            <p><strong>Valor:</strong> ${pedido.total?.toLocaleString()}</p>
+                            <p><strong>Repartidor:</strong> {pedido.repartidor || "No asignado"}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
+            )}
+
+            {/* PESTAÑA: TRANSACCIONES */}
+            {pestanaActiva === "transacciones" && (
+              <div className="seccion-transacciones">
+                <div className="transacciones-list">
+                  {clienteSeleccionado.transacciones.length > 0 ? (
+                    clienteSeleccionado.transacciones.map((trans) => (
+                      <div key={trans.id} className={`transaccion-item ${trans.tipo}`}>
+                        <div className="trans-info">
+                          <p className="trans-descripcion">{trans.descripcion}</p>
+                          <p className="trans-fecha">{trans.fecha}</p>
+                        </div>
+                        <p className={`trans-monto ${trans.tipo}`}>
+                          {trans.tipo === "pedido" ? "+" : "-"}${trans.monto.toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="sin-transacciones">Sin transacciones</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

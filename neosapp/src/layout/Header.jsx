@@ -20,7 +20,9 @@ export default function Header({ onToggleSidebar, sidebarAbierto }) {
   const esVend = esVendedor();
   const esRepar = esRepartidor();
 
-  const clienteActual = user ? obtenerClienteActual(user.id) : null;
+  // Obtener email del usuario para fallback en búsqueda de cliente
+  const emailUsuario = user?.email || datosUsuario?.email;
+  const clienteActual = user ? obtenerClienteActual(user.id, emailUsuario) : null;
 
   let tipoUsuario = "Invitado";
   if (esAdministrador) tipoUsuario = "Administrador";

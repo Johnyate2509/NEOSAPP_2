@@ -16,6 +16,7 @@ import ReportesVendedor from "./pages/ReportesVendedor";
 import Mapa from "./pages/Mapa";
 import Clientes from "./pages/Clientes";
 import AdminClientes from "./pages/AdminClientes";
+import MisPedidos from "./pages/MisPedidos";
 import "./styles/global.css";
 import "./styles/variables.css";
 import Productos from "./pages/Producto";
@@ -107,6 +108,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard/>} />
             <Route path="/pedidos" element={<Pedidos />} />
+            <Route path="/mis-pedidos" element={<MisPedidos />} />
             <Route path="/repartidores" element={<Repartidores />} />
             <Route path="/vendedores" element={<Vendedores />} />
             <Route path="/mapa" element={<Mapa />} />
