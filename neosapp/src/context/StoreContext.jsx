@@ -68,7 +68,7 @@ const adaptarProducto = (p) => ({
     return {
       id: p.id,
       cliente: clienteInfo?.nombre || p.nombre || p.cliente || "",
-      clienteCedula: p.cedula,
+      clienteCedula: clienteInfo?.cedula || p.cedula || "",
       cliente_id: clienteId,
       direccion: p.direccion || clienteInfo?.direccion || "",
       fecha,
@@ -234,17 +234,26 @@ const cargarProductos = async () => {
       return acc;
     }, {});
 
-    setPedidos(
-      pedidosData.map((pedido) =>
-        adaptarPedido(
-          pedido,
-          detallesPorPedido[pedido.id] || pedido.items || [],
-          Array.isArray(clientesCargados) && clientesCargados.length > 0
-            ? clientesCargados
-            : clientes
-        )
+    const pedidosAdaptados = pedidosData.map((pedido) =>
+      adaptarPedido(
+        pedido,
+        detallesPorPedido[pedido.id] || pedido.items || [],
+        Array.isArray(clientesCargados) && clientesCargados.length > 0
+          ? clientesCargados
+          : clientes
       )
     );
+
+    console.log("📦 Pedidos cargados:", pedidosAdaptados.map(p => ({
+      id: p.id,
+      cliente: p.cliente,
+      clienteCedula: p.clienteCedula,
+      cliente_id: p.cliente_id,
+      estado: p.estado,
+      total: p.total
+    })));
+
+    setPedidos(pedidosAdaptados);
   };
 
   const cargarRepartidores = async () => {

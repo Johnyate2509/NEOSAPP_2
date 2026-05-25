@@ -119,7 +119,7 @@ export default function Clientes() {
   return (
     <div className="clientes-page">
       <h2>Cartera de Clientes</h2>
-      <p>Gestión de clientes, sald0s y pagos</p>
+      <p>Gestión de clientes, saldos y pagos</p>
 
       <div className="clientes-contenedor">
         {/* Lista de clientes */}
