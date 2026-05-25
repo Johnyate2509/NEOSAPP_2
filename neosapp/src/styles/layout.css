@@ -263,6 +263,16 @@
   color: #66bb6a;
 }
 
+.menu-item.profile {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.menu-item.profile:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #7d8ff5;
+}
+
 .menu-label {
   color: #999;
   font-size: 11px;

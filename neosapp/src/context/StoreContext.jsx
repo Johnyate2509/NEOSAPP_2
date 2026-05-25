@@ -1304,6 +1304,45 @@ const datosCliente = {
     return true;
   };
 
+  const obtenerClienteActual = (usuarioId) => {
+    if (!usuarioId) return null;
+    return clientes.find((c) => String(c.usuario_id) === String(usuarioId)) || null;
+  };
+
+  const actualizarClienteNombre = async (clienteId, nombre) => {
+    const { error } = await supabase
+      .from("clientes")
+      .update({ nombre })
+      .eq("id", clienteId);
+
+    if (error) {
+      console.error("Error actualizando nombre del cliente:", error);
+      return false;
+    }
+
+    setClientes((prev) =>
+      prev.map((c) => (c.id === clienteId ? { ...c, nombre } : c))
+    );
+    return true;
+  };
+
+  const actualizarClienteCedula = async (clienteId, cedula) => {
+    const { error } = await supabase
+      .from("clientes")
+      .update({ cedula })
+      .eq("id", clienteId);
+
+    if (error) {
+      console.error("Error actualizando cédula del cliente:", error);
+      return false;
+    }
+
+    setClientes((prev) =>
+      prev.map((c) => (c.id === clienteId ? { ...c, cedula } : c))
+    );
+    return true;
+  };
+
   const eliminarVendedor = async (vendedorUsuarioId) => {
     if (!vendedorUsuarioId) {
       return { error: "ID de vendedor no proporcionado" };
@@ -1669,6 +1708,9 @@ return (
       registrarPago,
       actualizarClienteTelefono,
       actualizarClienteDireccion,
+      obtenerClienteActual,
+      actualizarClienteNombre,
+      actualizarClienteCedula,
       cambiarEstadoPedido,
       actualizarFechaPedido,
       eliminarPedido,

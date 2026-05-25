@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useStore } from "../context/StoreContext";
+import ProfileModal from "../components/ProfileModal";
 import "../styles/layout.css";
 
 export default function Header({ onToggleSidebar, sidebarAbierto }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { usuarioAutenticado, obtenerDatosUsuario, obtenerAvatarUsuario, esAdmin, esVendedor, esRepartidor, logout } = useAuth();
+  const { usuarioAutenticado, obtenerDatosUsuario, obtenerAvatarUsuario, esAdmin, esVendedor, esRepartidor, logout, user } = useAuth();
+  const { obtenerClienteActual } = useStore();
   const [mostrarMenu, setMostrarMenu] = useState(false);
+  const [mostrarModalPerfil, setMostrarModalPerfil] = useState(false);
 
   const datosUsuario = obtenerDatosUsuario();
   const usuario = datosUsuario?.nombre || datosUsuario?.usuario;
@@ -15,6 +19,8 @@ export default function Header({ onToggleSidebar, sidebarAbierto }) {
   const esAdministrador = esAdmin();
   const esVend = esVendedor();
   const esRepar = esRepartidor();
+
+  const clienteActual = user ? obtenerClienteActual(user.id) : null;
 
   let tipoUsuario = "Invitado";
   if (esAdministrador) tipoUsuario = "Administrador";
@@ -110,6 +116,20 @@ export default function Header({ onToggleSidebar, sidebarAbierto }) {
                     <strong>{tipoUsuario}</strong>
                   </div>
                   <hr className="menu-divider" />
+                  {clienteActual && (
+                    <>
+                      <button
+                        className="menu-item profile"
+                        onClick={() => {
+                          setMostrarModalPerfil(true);
+                          setMostrarMenu(false);
+                        }}
+                      >
+                        👤 Mi Perfil
+                      </button>
+                      <hr className="menu-divider" />
+                    </>
+                  )}
                   <button
                     className="menu-item logout"
                     onClick={handleLogout}
@@ -141,6 +161,13 @@ export default function Header({ onToggleSidebar, sidebarAbierto }) {
           )}
         </div>
       </div>
+
+      {mostrarModalPerfil && clienteActual && (
+        <ProfileModal
+          clienteId={clienteActual.id}
+          onClose={() => setMostrarModalPerfil(false)}
+        />
+      )}
     </header>
   );
 }
