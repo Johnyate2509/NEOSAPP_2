@@ -792,6 +792,41 @@
   box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
+/* RESUMEN DE CLIENTE LOGUEADO */
+.cliente-resumen-logueado {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #10b981;
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resumen-item label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.resumen-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
 /* BÚSQUEDA DE CLIENTE */
 .busqueda-cliente {
   display: flex;

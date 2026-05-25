@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useStore } from "../context/StoreContext";
 import { supabase } from "../context/supabaseClient";
 import "./login.css";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { crearCliente } = useStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,11 +45,19 @@ export default function Register() {
     }
 
     try {
-      const metadata = { nombre, cedula, direccion, telefono };
-      const result = await register(email, password, 'cliente', metadata);
+      // Usar crearCliente que maneja: Auth, usuarios table y clientes table
+      const resultado = await crearCliente(
+        nombre,
+        cedula,
+        direccion,
+        telefono,
+        email,  // correo
+        null,   // vendedor_id
+        password
+      );
 
-      if (!result.success) {
-        setError(result.error);
+      if (resultado.error) {
+        setError(resultado.error);
         setCargando(false);
         return;
       }
@@ -68,14 +76,14 @@ export default function Register() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className="login-container register-container">
+      <div className="login-box register-box">
         <div className="login-header">
           <h1>NEOSAPP</h1>
           <p>Crear Nueva Cuenta</p>
         </div>
 
-        <form onSubmit={handleRegister} className="login-form">
+        <form onSubmit={handleRegister} className="login-form register-form">
           <div className="form-group">
             <label>Email</label>
             <input

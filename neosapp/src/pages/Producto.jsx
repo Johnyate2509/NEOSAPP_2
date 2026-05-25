@@ -24,7 +24,7 @@ const FORMAS_PAGO = ["Efectivo", "Crédito", "Abono"];
 
 export default function Producto() {
   const { productos, categorias, setProductos, crearProducto, actualizarProducto, clientes } = useStore();
-  const { esAdmin, esVendedor, obtenerDatosUsuario } = useAuth();
+  const { esAdmin, esVendedor, obtenerDatosUsuario, user, getUserRole } = useAuth();
   const vendedorData = obtenerDatosUsuario();
 
   const obtenerCategoriaProducto = (producto) =>
@@ -61,6 +61,25 @@ export default function Producto() {
   });
   const [imagenesVista, setImagenesVista] = useState([]);
 
+  // Estados para el carrito (debe estar ANTES de useEffect que los usa)
+  const [carrito, setCarrito] = useState([]);
+  const [mostrarModalPedido, setMostrarModalPedido] = useState(false);
+  const [busquedaProducto, setBusquedaProducto] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
+  const [erroresValidacion, setErroresValidacion] = useState([]);
+  const [datosCliente, setDatosCliente] = useState({
+    cedula: "",
+    nombre: "",
+    direccion: "",
+    correoElectronico: "",
+    numeroCelular: "",
+    password: "",
+    formaPago: FORMAS_PAGO[0],
+  });
+
   useEffect(() => {
     const handleResize = () => {
       setEsVistaMovil(window.innerWidth <= 820);
@@ -70,6 +89,30 @@ export default function Producto() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Cargar datos del cliente logueado cuando se abre el modal de pedido
+  useEffect(() => {
+    const cargarDatosClienteLogueado = async () => {
+      if (mostrarModalPedido && user && getUserRole() === "cliente") {
+        // Buscar cliente por usuario_id
+        const clienteLogueado = clientes.find((c) => c.usuario_id === user.id);
+        
+        if (clienteLogueado) {
+          setDatosCliente({
+            cedula: clienteLogueado.cedula || "",
+            nombre: clienteLogueado.nombre || "",
+            direccion: clienteLogueado.direccion || "",
+            correoElectronico: clienteLogueado.correo || user.email || "",
+            numeroCelular: clienteLogueado.telefono || "",
+            password: "",
+            formaPago: datosCliente.formaPago || FORMAS_PAGO[0],
+          });
+        }
+      }
+    };
+
+    cargarDatosClienteLogueado();
+  }, [mostrarModalPedido, user, clientes]);
 
   // Estados para ver detalles del producto
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
@@ -88,25 +131,6 @@ export default function Producto() {
     imagenes: [],
   });
 
-  // Estados para el carrito
-  const [carrito, setCarrito] = useState([]);
-  const [mostrarModalPedido, setMostrarModalPedido] = useState(false);
-  const [busquedaProducto, setBusquedaProducto] = useState("");
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
-  const [busquedaCliente, setBusquedaCliente] = useState("");
-  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [mostrarListaClientes, setMostrarListaClientes] = useState(false);
-  const [erroresValidacion, setErroresValidacion] = useState([]);
-  const [datosCliente, setDatosCliente] = useState({
-    cedula: "",
-    nombre: "",
-    direccion: "",
-    correoElectronico: "",
-    numeroCelular: "",
-    password: "",
-    formaPago: FORMAS_PAGO[0],
-  });
-//
   const crearProductoHandler = async () => {
     if (!nuevo.nombre || !nuevo.precio || !nuevo.stock) {
       alert("Por favor completa nombre, precio y stock");
@@ -1289,54 +1313,83 @@ const obtenerProductosFiltrados = (categoria) => {
                 </div>
               ) : (
                 <>
-                  <input
-                    placeholder="Cédula o NIT"
-                    value={datosCliente.cedula}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, cedula: e.target.value })
-                    }
-                  />
+                  {user && getUserRole() === "cliente" ? (
+                    // Cliente logueado: mostrar resumen de datos
+                    <div className="cliente-resumen-logueado">
+                      <div className="resumen-item">
+                        <label>Nombre:</label>
+                        <p>{datosCliente.nombre}</p>
+                      </div>
+                      <div className="resumen-item">
+                        <label>Cédula:</label>
+                        <p>{datosCliente.cedula}</p>
+                      </div>
+                      <div className="resumen-item">
+                        <label>Dirección:</label>
+                        <p>{datosCliente.direccion}</p>
+                      </div>
+                      <div className="resumen-item">
+                        <label>Correo:</label>
+                        <p>{datosCliente.correoElectronico}</p>
+                      </div>
+                      <div className="resumen-item">
+                        <label>Teléfono:</label>
+                        <p>{datosCliente.numeroCelular || "No registrado"}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    // Usuario no logueado: formulario de registro
+                    <>
+                      <input
+                        placeholder="Cédula o NIT"
+                        value={datosCliente.cedula}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, cedula: e.target.value })
+                        }
+                      />
 
-                  <input
-                    placeholder="Nombre del cliente"
-                    value={datosCliente.nombre}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, nombre: e.target.value })
-                    }
-                  />
+                      <input
+                        placeholder="Nombre del cliente"
+                        value={datosCliente.nombre}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, nombre: e.target.value })
+                        }
+                      />
 
-                  <input
-                    placeholder="Dirección"
-                    value={datosCliente.direccion}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, direccion: e.target.value })
-                    }
-                  />
+                      <input
+                        placeholder="Dirección"
+                        value={datosCliente.direccion}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, direccion: e.target.value })
+                        }
+                      />
 
-                  <input
-                    placeholder="Correo electrónico"
-                    value={datosCliente.correoElectronico}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, correoElectronico: e.target.value })
-                    }
-                  />
+                      <input
+                        placeholder="Correo electrónico"
+                        value={datosCliente.correoElectronico}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, correoElectronico: e.target.value })
+                        }
+                      />
 
-                  <input
-                    placeholder="Número de celular"
-                    value={datosCliente.numeroCelular}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, numeroCelular: e.target.value })
-                    }
-                  />
+                      <input
+                        placeholder="Número de celular"
+                        value={datosCliente.numeroCelular}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, numeroCelular: e.target.value })
+                        }
+                      />
 
-                  <input
-                    type="password"
-                    placeholder="Contraseña para el cliente"
-                    value={datosCliente.password}
-                    onChange={(e) =>
-                      setDatosCliente({ ...datosCliente, password: e.target.value })
-                    }
-                  />
+                      <input
+                        type="password"
+                        placeholder="Contraseña para el cliente"
+                        value={datosCliente.password}
+                        onChange={(e) =>
+                          setDatosCliente({ ...datosCliente, password: e.target.value })
+                        }
+                      />
+                    </>
+                  )}
                 </>
               )}
 
