@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../context/StoreContext";
 import "../styles/repartidores.css";
-import { supabase } from "../context/supabaseClient";
 
 
 
@@ -14,17 +13,52 @@ export default function Repartidores() {
   const [mensaje, setMensaje] = useState("");
 
   const agregarRepartidor = async () => {
-    const resultado = await crearRepartidor(nombre, email, zona, password);
-    
-    if (resultado.error) {
-      setMensaje(resultado.error);
-    } else {
+    if (!nombre.trim() || !email.trim() || !zona.trim() || !password) {
+      setMensaje("Todos los campos son requeridos");
+      return;
+    }
+
+    try {
+      console.log("Intentando crear repartidor:", { nombre, email, zona });
+      const resultado = await crearRepartidor(nombre.trim(), email.trim(), zona.trim(), password);
+      console.log("crearRepartidor resultado:", resultado);
+
+      if (!resultado || resultado.error) {
+        const msg = (resultado && resultado.error) || "Error al crear repartidor";
+        setMensaje(msg);
+        return;
+      }
+
       setMensaje("Repartidor agregado exitosamente");
       setNombre("");
       setEmail("");
       setZona("");
       setPassword("");
       setTimeout(() => setMensaje(""), 3000);
+    } catch (err) {
+      console.error("Excepción en agregarRepartidor:", err);
+      setMensaje("Error creando repartidor (ver consola)");
+    }
+  };
+
+  const handleEliminarRepartidor = async (id) => {
+    if (!id) return;
+    const confirmar = window.confirm("¿Eliminar este repartidor? Esta acción es irreversible.");
+    if (!confirmar) return;
+
+    try {
+      const resultado = await eliminarRepartidor(id);
+      if (!resultado || resultado.error) {
+        const msg = (resultado && resultado.error) || "Error al eliminar repartidor (revisar consola)";
+        setMensaje(msg);
+        console.error("eliminarRepartidor error for id:", id, resultado);
+        return;
+      }
+      setMensaje("Repartidor eliminado correctamente");
+      setTimeout(() => setMensaje(""), 3000);
+    } catch (err) {
+      console.error("Excepción al eliminar repartidor:", err);
+      setMensaje("Error eliminando repartidor (excepción)");
     }
   };
 
@@ -90,7 +124,7 @@ export default function Repartidores() {
 
             <button
               className="btn-eliminar"
-              onClick={() => eliminarRepartidor(repartidor.id)}
+              onClick={() => handleEliminarRepartidor(repartidor.id)}
             >
               Eliminar
             </button>

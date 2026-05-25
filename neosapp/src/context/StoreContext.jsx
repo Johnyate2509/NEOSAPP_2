@@ -10,6 +10,7 @@ export function StoreProvider({ children }) {
   const [clientes, setClientes] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [repartidores, setRepartidores] = useState([]);
+  const [tablaPedidosTieneColumnaRepartidor, setTablaPedidosTieneColumnaRepartidor] = useState(true);
   const [vendedores, setVendedores] = useState([]);
   const [usuariosVendedores, setUsuariosVendedores] = useState([]);
   const [tablaVendedoresExiste, setTablaVendedoresExiste] = useState(true);
@@ -1073,18 +1074,96 @@ const datosCliente = {
   };
 
   const eliminarRepartidor = async (id) => {
-    const { error } = await supabase
-      .from("usuarios")
-      .delete()
-      .eq("id", id);
+    if (!id) return { error: "ID de repartidor no proporcionado" };
 
-    if (error) {
-      console.error("Error eliminando repartidor:", error);
-      return false;
+    try {
+      // Obtener nombre del repartidor si existe (para limpiar columna 'repartidor' basada en nombre)
+      const { data: usuarioData, error: errorUsuario } = await supabase
+        .from("usuarios")
+        .select("id, nombre, rol")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (errorUsuario) {
+        console.error("Error obteniendo usuario repartidor:", errorUsuario);
+        return { error: errorUsuario.message || String(errorUsuario) };
+      }
+
+      const nombreRepartidor = usuarioData?.nombre || null;
+
+      // 1) Desasignar pedidos que referencian al repartidor por id
+      try {
+        const { error: errPedidosId } = await supabase
+          .from("pedidos")
+          .update({ repartidor_id: null })
+          .eq("repartidor_id", id);
+
+        if (errPedidosId) {
+          console.error("Error limpiando repartidor_id en pedidos:", errPedidosId);
+          // continuar; intentaremos otras limpiezas y no bloquear la eliminación local
+        }
+      } catch (e) {
+        console.error("Excepción limpiando repartidor_id en pedidos:", e);
+      }
+
+      // 2) Si existe la columna 'repartidor' con el nombre, desasignar también
+      if (nombreRepartidor) {
+        try {
+          const { error: errPedidosNombre } = await supabase
+            .from("pedidos")
+            .update({ repartidor: null })
+            .eq("repartidor", nombreRepartidor);
+
+          if (errPedidosNombre) {
+            const msg = String(errPedidosNombre.message || "").toLowerCase();
+            if (msg.includes("could not find the 'repartidor' column") ||
+                msg.includes("could not find column \"repartidor\"")) {
+              console.warn("La columna 'repartidor' no existe, se omite limpieza por nombre.");
+            } else {
+              console.error("Error limpiando repartidor (por nombre) en pedidos:", errPedidosNombre);
+            }
+          }
+        } catch (e) {
+          console.error("Excepción limpiando repartidor (por nombre) en pedidos:", e);
+        }
+      }
+
+      // Actualizar estado local de pedidos: quitar asignación a este repartidor
+      setPedidos((prev) =>
+        prev.map((p) =>
+          String(p.repartidor_id) === String(id) || String(p.repartidor) === String(nombreRepartidor)
+            ? { ...p, repartidor_id: null, repartidor: "" }
+            : p
+        )
+      );
+
+      // 3) Eliminar el usuario en la tabla 'usuarios'
+      const { data, error } = await supabase
+        .from("usuarios")
+        .delete()
+        .eq("id", id)
+        .eq("rol", "repartidor");
+
+      if (error) {
+        console.error("Error eliminando repartidor en tabla usuarios:", error);
+        return { error: error.message || JSON.stringify(error) };
+      }
+
+      // Actualizar state de repartidores
+      setRepartidores((prev) => prev.filter((r) => String(r.id) !== String(id)));
+
+      // 4) Intentar eliminar en Auth (si la key/permite)
+      try {
+        await supabase.auth.admin.deleteUser(id);
+      } catch (e) {
+        console.warn("No se pudo eliminar usuario en Auth (posible falta de permisos):", e);
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      console.error("Excepción eliminando repartidor:", err);
+      return { error: err.message || String(err) };
     }
-
-    setRepartidores((prev) => prev.filter((r) => r.id !== id));
-    return true;
   };
 
   const registrarPago = async (
@@ -1253,22 +1332,33 @@ const datosCliente = {
   };
 
   const cambiarEstadoPedido = async (pedidoId, estado) => {
-    const { error } = await supabase
-      .from("pedidos")
-      .update({ estado })
-      .eq("id", pedidoId);
-
-    if (error) {
-      console.error("Error cambiando estado de pedido:", error);
+    const estadosPermitidos = ["Pendiente", "En camino", "Cancelado", "Entregado"];
+    if (!estadosPermitidos.includes(estado)) {
+      console.warn("Estado no permitido:", estado);
       return false;
     }
 
-    setPedidos((prev) =>
-      prev.map((pedido) =>
-        pedido.id === pedidoId ? { ...pedido, estado } : pedido
-      )
-    );
-    return true;
+    try {
+      const { error } = await supabase
+        .from("pedidos")
+        .update({ estado })
+        .eq("id", pedidoId);
+
+      if (error) {
+        console.error("Error cambiando estado de pedido:", error);
+        return false;
+      }
+
+      setPedidos((prev) =>
+        prev.map((pedido) =>
+          pedido.id === pedidoId ? { ...pedido, estado } : pedido
+        )
+      );
+      return true;
+    } catch (err) {
+      console.error("Excepción cambiando estado de pedido:", err);
+      return false;
+    }
   };
 
   const eliminarPedido = async (pedidoId) => {
@@ -1299,34 +1389,53 @@ const datosCliente = {
         .update({ repartidor_id: repartidorId })
         .eq("id", pedidoId);
 
+      // Preparar valor para la propiedad legible (nombre) en caso de necesitarse
+      let valorGuardar = null;
+      if (repartidorId) {
+        const repartidor = repartidores.find((r) => String(r.id) === String(repartidorId));
+        valorGuardar = repartidor ? repartidor.nombre : repartidorId;
+      }
+
       if (errorId) {
-        // Si falla por tipo de dato, intentar guardar como string en "repartidor"
+        // Si falla por tipo de dato u otra razón, intentar guardar como string en "repartidor"
         console.warn("No se pudo guardar con repartidor_id, intentando con 'repartidor':", errorId);
-        
-        // Obtener el nombre del repartidor si existe
-        let valorGuardar = null;
-        if (repartidorId) {
-          const repartidor = repartidores.find((r) => r.id === repartidorId);
-          valorGuardar = repartidor ? repartidor.nombre : repartidorId;
-        }
 
-        const { error: errorRepartidor } = await supabase
-          .from("pedidos")
-          .update({ repartidor: valorGuardar })
-          .eq("id", pedidoId);
+        if (tablaPedidosTieneColumnaRepartidor) {
+          const { error: errorRepartidor } = await supabase
+            .from("pedidos")
+            .update({ repartidor: valorGuardar })
+            .eq("id", pedidoId);
 
-        if (errorRepartidor) {
-          console.error("Error asignando repartidor:", errorRepartidor);
-          alert("Error al asignar repartidor: " + errorRepartidor.message);
-          return false;
+          if (errorRepartidor) {
+            const msg = String(errorRepartidor.message || "").toLowerCase();
+            if (
+              msg.includes("could not find the 'repartidor' column") ||
+              msg.includes("could not find column \"repartidor\"") ||
+              String(errorRepartidor.code) === "42703"
+            ) {
+              console.warn("Columna 'repartidor' no encontrada en pedidos, guardando solo localmente.");
+              setTablaPedidosTieneColumnaRepartidor(false);
+              // No retornar; actualizaremos el estado local abajo
+            } else {
+              console.error("Error asignando repartidor:", errorRepartidor);
+              alert("Error al asignar repartidor: " + errorRepartidor.message);
+              return false;
+            }
+          }
+        } else {
+          console.warn("Se evita intento de guardar columna 'repartidor' porque no existe según flag.");
         }
       }
 
+      // Actualizar estado local siempre (siempre reflejamos la intención del usuario en la UI)
       setPedidos((prev) =>
         prev.map((pedido) =>
-          pedido.id === pedidoId ? { ...pedido, repartidor_id: repartidorId } : pedido
+          pedido.id === pedidoId
+            ? { ...pedido, repartidor_id: repartidorId, repartidor: valorGuardar || "" }
+            : pedido
         )
       );
+
       return true;
     } catch (err) {
       console.error("Error en asignarRepartidor:", err);
