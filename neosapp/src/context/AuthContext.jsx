@@ -5,27 +5,81 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const cargarPerfilUsuario = async (userId) => {
+    if (!userId) {
+      setPerfil(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("id, nombre, email, zona, rol")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error cargando perfil de usuario:", error);
+        setPerfil(null);
+        return;
+      }
+
+      setPerfil(data || null);
+    } catch (err) {
+      console.error("Excepción cargando perfil de usuario:", err);
+      setPerfil(null);
+    }
+  };
+
   useEffect(() => {
-    // Obtener sesión inicial
+    const handleSession = async (session) => {
+      try {
+        setLoading(true);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await cargarPerfilUsuario(currentUser.id);
+        } else {
+          setPerfil(null);
+        }
+      } catch (err) {
+        console.error("Error manejando sesión de auth:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const sessionResponse = await supabase.auth.getSession();
+        const currentUser = sessionResponse?.data?.session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) {
+          await cargarPerfilUsuario(currentUser.id);
+        }
+      } catch (err) {
+        console.error("Error obteniendo sesión inicial:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getInitialSession();
 
     // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-// LOGIN
-    return () => subscription.unsubscribe();
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Usar un task separado para evitar posibles deadlocks con Supabase
+      setTimeout(() => {
+        handleSession(session);
+      }, 0);
+    });
+
+    const subscription = data?.subscription;
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   const login = async (email, password) => {
@@ -79,7 +133,6 @@ export function AuthProvider({ children }) {
         .insert([clienteData]);
       if (insertError) {
         console.error('Error insertando cliente:', insertError);
-        // Opcional: eliminar el usuario de auth si falla la inserción
         return { success: false, error: 'Error al crear el perfil de cliente: ' + insertError.message };
       }
     }
@@ -89,10 +142,16 @@ export function AuthProvider({ children }) {
   };
 
   const getUserRole = () => {
-    return user?.user_metadata?.role || 'cliente';
+    return perfil?.rol || user?.user_metadata?.role || 'cliente';
   };
 
   const getUserMetadata = () => {
+    if (perfil) {
+      return {
+        ...user?.user_metadata,
+        ...perfil,
+      };
+    }
     return user?.user_metadata || {};
   };
 
@@ -108,7 +167,7 @@ export function AuthProvider({ children }) {
   const esAdmin = () => getUserRole() === "admin";
   const esRepartidor = () => getUserRole() === "repartidor";
   const esVendedor = () => getUserRole() === "vendedor";
-  const obtenerUsuario = () => user?.email;
+  const obtenerUsuario = () => perfil?.nombre || user?.email;
   const obtenerDatosUsuario = () => getUserMetadata();
   const obtenerAvatarUsuario = () => getUserAvatarUrl();
   const isAuthenticated = () => !!user;
@@ -116,6 +175,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    perfil,
     loading,
     login,
     logout,
